@@ -195,8 +195,9 @@
 
 <main class="wrap">
   <div class="banner" id="editBanner">
-    <span>✏️ Edit mode is on — change any Taxes, Insurance, CAM or Square Feet value. Totals, $/SF and charts recalculate live. Export to Excel when done.</span>
+    <span>✏️ Edit mode is on — change any Taxes, Insurance, CAM or Square Feet value, or add/remove properties. Totals, $/SF and charts recalculate live. Export to Excel when done.</span>
   </div>
+  <div class="banner" id="errorBanner" style="background:var(--amber-bg);border-color:#F0DCB0;color:var(--amber)"></div>
 
   <section class="kpis" id="kpis"></section>
 
@@ -220,6 +221,7 @@
     </select>
     <label class="toggle-lab"><input type="checkbox" id="flagChk"> Flagged only</label>
     <div class="push">
+      <button class="btn ghost" id="addBtn" style="display:none">＋ Add property</button>
       <button class="btn ghost" id="editBtn">✏️ Edit</button>
       <button class="btn primary" id="xlsxBtn">⬇ Export to Excel</button>
     </div>
@@ -258,9 +260,10 @@
     <div class="panel">
       <div class="ph">
         <div class="tabs" id="infoTabs">
-          <button data-tab="removed" class="on">Removed properties (14)</button>
+          <button data-tab="removed" class="on">Removed properties <span id="removedCount"></span></button>
           <button data-tab="method">Notes &amp; methodology</button>
         </div>
+        <button class="btn ghost" id="addRemovedBtn" style="display:none">＋ Add</button>
       </div>
       <div id="removedPane"></div>
       <div id="methodPane" class="method" style="display:none"></div>
@@ -278,412 +281,64 @@
   <div class="modal" id="modal"></div>
 </div>
 
-<script id="DATA" type="application/json">{
- "properties": [
-  {
-   "name": "Center - Hoy",
-   "address": "729 Richmond Ave, Staunton, VA",
-   "sf": 9840,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 7985.08,
-     "insurance": 6792,
-     "cam": 13415.53,
-     "total": 28192.61,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 8950.76,
-     "insurance": 7957,
-     "cam": 17794.79,
-     "total": 34702.55,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Center - 1854 E Market St",
-   "address": "1854 E Market St., Harrisonburg, VA",
-   "sf": 25422,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 41981.69,
-     "insurance": 19589.99,
-     "cam": 10229.31,
-     "total": 71800.99,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 46753.41,
-     "insurance": 17971.33,
-     "cam": 20418,
-     "total": 85142.74,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Center - Verona",
-   "address": "465/485 Lee Hwy, Verona, VA",
-   "sf": 41063,
-   "flags": "Multi-address",
-   "data": {
-    "2024": {
-     "taxes": 19547.32,
-     "insurance": 8354.5,
-     "cam": 18028.93,
-     "total": 45930.75,
-     "comments": {
-      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel."
-     }
-    },
-    "2025": {
-     "taxes": 19443.32,
-     "insurance": 9203.5,
-     "cam": 20927.21,
-     "total": 49574.03,
-     "comments": {
-      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel."
-     }
-    }
-   }
-  },
-  {
-   "name": "Center - Elliott",
-   "address": "1100 Greenville Ave, Staunton, VA",
-   "sf": 26750,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 11974.95,
-     "insurance": 6421,
-     "cam": 11255.28,
-     "total": 29651.23,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 12942.93,
-     "insurance": 6421,
-     "cam": 13872.16,
-     "total": 33236.09,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Center - Tire Mart",
-   "address": "1027 Richmond Ave, Staunton, VA",
-   "sf": 9820,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 16169.52,
-     "insurance": 7072,
-     "cam": 13499.46,
-     "total": 36740.98,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 17609.41,
-     "insurance": 8029,
-     "cam": 19754.59,
-     "total": 45393,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Center - Genesis",
-   "address": "823 Richmond Ave, Staunton, VA",
-   "sf": 7450,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 5237.65,
-     "insurance": 1721.24,
-     "cam": 7012.88,
-     "total": 13971.77,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 5854.03,
-     "insurance": 2231,
-     "cam": 9009.49,
-     "total": 17094.52,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Center - Sunnyside",
-   "address": "105 Lee Jackson Highway, Staunton, VA",
-   "sf": 9600,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 6418.36,
-     "insurance": 2705,
-     "cam": 3437.42,
-     "total": 12560.78,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 6418.36,
-     "insurance": 2705,
-     "cam": 4844.21,
-     "total": 13967.57,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Center - Log Lot",
-   "address": "49 Lee Jackson Highway, Staunton, VA",
-   "sf": 7189.5,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 5839.08,
-     "insurance": 2815,
-     "cam": 8961.22,
-     "total": 17615.3,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 5735.08,
-     "insurance": 2815,
-     "cam": 9745.12,
-     "total": 18295.2,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Center - Gander",
-   "address": "440 Gander Drive, Charlottesville, VA",
-   "sf": 45801,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 81873.84,
-     "insurance": 17472.4,
-     "cam": 22540.16,
-     "total": 121886.4,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 86413.14,
-     "insurance": 18654.1,
-     "cam": 48035.69,
-     "total": 153102.93,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Center - 2655 S Main St. Hburg",
-   "address": "2655 S Main St., Harrisonburg, VA",
-   "sf": 5770,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 14503.06,
-     "insurance": 7515.6,
-     "cam": 7652.46,
-     "total": 29671.12,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 15597.93,
-     "insurance": 6120.9,
-     "cam": 10688.2,
-     "total": 32407.03,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Building - Old Planters LLC (Starbucks)",
-   "address": "115 Lee Jackson Hwy, Staunton, VA",
-   "sf": 3374,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 6050.2,
-     "insurance": 5292,
-     "cam": 236.93,
-     "total": 11579.13,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 5946.2,
-     "insurance": 5292,
-     "cam": 0,
-     "total": 11238.2,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Building - F&M Bank",
-   "address": "2813 N Augusta St., Staunton, VA",
-   "sf": 2266,
-   "flags": "Review",
-   "data": {
-    "2024": {
-     "taxes": 0,
-     "insurance": 1194,
-     "cam": 2684.25,
-     "total": 3878.25,
-     "comments": {
-      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data."
-     }
-    },
-    "2025": {
-     "taxes": 0,
-     "insurance": 0,
-     "cam": 2903,
-     "total": 2903,
-     "comments": {
-      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data."
-     }
-    }
-   }
-  },
-  {
-   "name": "Building - Log Lot - Old Cash Advance",
-   "address": "57 Lee Jackson Highway (Unit 117), Staunton, VA",
-   "sf": 1784,
-   "flags": null,
-   "data": {
-    "2024": {
-     "taxes": 0,
-     "insurance": 0,
-     "cam": 0,
-     "total": 0,
-     "comments": {}
-    },
-    "2025": {
-     "taxes": 1564.16,
-     "insurance": 0,
-     "cam": 0,
-     "total": 1564.16,
-     "comments": {}
-    }
-   }
-  },
-  {
-   "name": "Center - 143/153 Crown Drive (Goodwill Danville)",
-   "address": "143/153 Crown Drive, Danville, VA",
-   "sf": 23015,
-   "flags": "Multi-address \u00b7 Review",
-   "data": {
-    "2024": {
-     "taxes": 0,
-     "insurance": 0,
-     "cam": 0,
-     "total": 0,
-     "comments": {
-      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel."
-     }
-    },
-    "2025": {
-     "taxes": 18867.56,
-     "insurance": 9152,
-     "cam": 1232.5,
-     "total": 29252.06,
-     "comments": {
-      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel.",
-      "Insurance": "A nearly identical amount also appears in the non-reimbursable (6000) bucket for this year - possible duplicate/double entry. This figure uses the reimbursable (5000) amount only; worth a quick check before finalizing."
-     }
-    }
-   }
-  }
- ],
- "removed": [
-  {
-   "name": "Building - Honda Auto Body shop/Swartz",
-   "address": "2675 S Main St., Harrisonburg, VA",
-   "reason": "No Taxes, Insurance, or CAM activity recorded in Yardi for any year, despite an active long-term tenant. Tenant likely pays these costs directly outside Yardi's books."
-  },
-  {
-   "name": "Center - 210 N Central Ave / 211 N Lewis St",
-   "address": "211 N. Lewis St., Staunton, VA",
-   "reason": "No reimbursable activity in any year. Also flagged in the Master Property List reconciliation as a classification conflict - PDF lists this as \"Family Use,\" Yardi shows it fully leased. Resolve that first."
-  },
-  {
-   "name": "Center - 213 N Lewis St",
-   "address": "213 N. Lewis St., Staunton, VA",
-   "reason": "Virtually no financial data in any year. Also flagged as not present in the original PDF ownership table, tied to a tenant mix-up (Jazzercise/Staunton Strength & Fitness)."
-  },
-  {
-   "name": "Building - 5th St",
-   "address": "1113 5th St SW, Charlottesville, VA",
-   "reason": "No reimbursable data in any year. Current tenants didn't start until 2026, after this window. Address/owning entity still unconfirmed."
-  },
-  {
-   "name": "Building - Office NDEP",
-   "address": "2903 N Augusta St., Staunton, VA",
-   "reason": "This is Triangle's own office - the tenant on record is TPA itself, not a third party. No real tenant-recovery relationship to track."
-  },
-  {
-   "name": "Center - Heritage building",
-   "address": "2815-2817 N Augusta St., Staunton, VA",
-   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
-  },
-  {
-   "name": "Building & Bays - 808 Richmond",
-   "address": "808 Richmond Ave, Staunton, VA",
-   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
-  },
-  {
-   "name": "Building - 802 Richmond (Dahl Invest)",
-   "address": "802 Richmond Ave, Staunton, VA",
-   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
-  },
-  {
-   "name": "Building - Caliber (Caliber Collision)",
-   "address": "1720 Seminole Trail, Charlottesville, VA",
-   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
-  },
-  {
-   "name": "Building - Wells Property/Bookstore",
-   "address": "707 Richmond Ave, Staunton, VA",
-   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
-  },
-  {
-   "name": "Building - Keys Academy",
-   "address": "81 Quicks Mill Rd, Verona, VA",
-   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
-  },
-  {
-   "name": "Building - Flow Corner",
-   "address": "1289 Stoney Point Rd, Charlottesville, VA",
-   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
-  },
-  {
-   "name": "Building - Flow Center Lot (Goodwill Pantops)",
-   "address": "1311 Stoney Point Rd, Charlottesville, VA",
-   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
-  },
-  {
-   "name": "Building - 702 Richmond Ave",
-   "address": "702 Richmond Ave, Staunton, VA",
-   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
-  }
- ]
-}</script>
+
 <script>
 "use strict";
-const DATA = JSON.parse(document.getElementById('DATA').textContent);
-const P = DATA.properties;
+// Properties + removed-properties now live in Postgres and are loaded via
+// the /api/properties and /api/removed serverless functions (see bootstrap()
+// below) instead of being hard-coded here.
+let P = [];
+let REMOVED = [];
 const YEARS = [2024,2025];
-// give each property a stable id
-P.forEach((p,i)=>{p.id=i;});
 
 const state = { year:2025, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed' };
+
+// ---------- API ----------
+async function apiRequest(url, opts){
+  const res = await fetch(url, opts);
+  if(!res.ok){
+    let msg = `${res.status} ${res.statusText}`;
+    try{ const body = await res.json(); if(body && body.error) msg = body.error; }catch(_){}
+    throw new Error(msg);
+  }
+  if(res.status===204) return null;
+  return res.json();
+}
+const apiGet = (url)=>apiRequest(url);
+const apiPost = (url,body)=>apiRequest(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+const apiPut = (url,body)=>apiRequest(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+const apiDelete = (url)=>apiRequest(url,{method:'DELETE'});
+
+function showLoading(){
+  $('#tbody').innerHTML = `<tr><td colspan="7"><div class="empty">Loading properties…</div></td></tr>`;
+  $('#tfoot').innerHTML = '';
+}
+function showLoadError(err){
+  $('#tbody').innerHTML = `<tr><td colspan="7"><div class="empty">Couldn't load data from the server: ${(err&&err.message)||err}. <button class="btn" id="retryLoad" style="margin-left:8px">Retry</button></div></td></tr>`;
+  $('#tfoot').innerHTML = '';
+  const btn=document.getElementById('retryLoad');
+  if(btn) btn.addEventListener('click', bootstrap);
+}
+function showActionError(msg){
+  const el = $('#errorBanner');
+  el.textContent = '⚠ '+msg;
+  el.classList.add('show');
+  clearTimeout(showActionError._t);
+  showActionError._t = setTimeout(()=>el.classList.remove('show'), 5000);
+}
+async function bootstrap(){
+  showLoading();
+  try{
+    const [props, removed] = await Promise.all([apiGet('/api/properties'), apiGet('/api/removed')]);
+    P = props;
+    REMOVED = removed;
+    renderRemoved();
+    renderAll();
+  }catch(err){
+    console.error('Failed to load data', err);
+    showLoadError(err);
+  }
+}
 
 const CAT = {taxes:{c:'var(--tax)',l:'Taxes'}, insurance:{c:'var(--ins)',l:'Insurance'}, cam:{c:'var(--cam)',l:'CAM'}};
 const $ = s=>document.querySelector(s);
@@ -792,8 +447,9 @@ function renderTable(){
     const denom=t||1;
     const bar=`<div class="microbar" title="Taxes ${usd(r.taxes)} · Ins ${usd(r.insurance)} · CAM ${usd(r.cam)}">`+
       parts.map(pt=>`<span style="width:${(pt.v/denom*100)}%;background:${CAT[pt.k].c}"></span>`).join('')+`</div>`;
+    const delBtn = state.edit ? `<button class="xbtn" data-del="${p.id}" title="Delete property" style="width:22px;height:22px;font-size:12px;margin-left:8px">✕</button>` : '';
     return `<tr class="${state.edit?'editrow':''}" data-open="${p.id}">
-      <td><div class="pname">${p.name}</div><div class="paddr">${p.address||''} ${badges}</div></td>
+      <td><div class="pname">${p.name}${delBtn}</div><div class="paddr">${p.address||''} ${badges}</div></td>
       <td>${sfCell}</td>
       <td class="tax">${cell('taxes')}</td>
       <td class="ins">${cell('insurance')}</td>
@@ -868,11 +524,17 @@ function renderTrend(){
 
 // ---------- Removed + method ----------
 function renderRemoved(){
-  $('#removedPane').innerHTML = DATA.removed.map(r=>`<div class="listitem">
-    <div class="li-t">${r.name}</div><div class="li-a">${r.address||''}</div>
-    <div class="li-r">${r.reason||''}</div></div>`).join('');
+  $('#removedCount').textContent = `(${REMOVED.length})`;
+  if(!REMOVED.length){
+    $('#removedPane').innerHTML = `<div class="empty">No removed properties.</div>`;
+  } else {
+    $('#removedPane').innerHTML = REMOVED.map(r=>`<div class="listitem">
+      <div class="li-t">${r.name}${state.edit?`<button class="xbtn" data-del-removed="${r.id}" title="Delete" style="width:22px;height:22px;font-size:12px;margin-left:8px;vertical-align:middle">✕</button>`:''}</div>
+      <div class="li-a">${r.address||''}</div>
+      <div class="li-r">${r.reason||''}</div></div>`).join('');
+  }
   $('#methodPane').innerHTML = `
-    <h3>Scope</h3><p>14 properties, 2024–2025. Property list and years reflect the reviewed feedback; see the Removed Properties tab for the 14 exclusions and why.</p>
+    <h3>Scope</h3><p>${P.length} properties, 2024–2025. Property list and years reflect the reviewed feedback; see the Removed Properties tab for the ${REMOVED.length} exclusions and why.</p>
     <h3>How Taxes, Insurance &amp; CAM are calculated</h3>
     <p>All three figures come from the <b>5000 (reimbursable) accounts only</b> in each property's Yardi annual statement — consistent with what feeds the CAM reconciliations. Non-reimbursable (6000-account) activity is intentionally excluded, even where it exists.</p>
     <p><b>CAM</b> = Total Reimbursable Expenses minus the reimbursable Insurance and Tax lines — i.e. the CAM-tagged line items only (Repairs-CAM, Grounds Maintenance-CAM, etc.).</p>
@@ -959,14 +621,29 @@ function closeDetail(){ $('#overlay').classList.remove('show'); }
 function bindEdit(){
   document.querySelectorAll('.edit-input').forEach(inp=>{
     inp.addEventListener('click',e=>e.stopPropagation());
-    inp.addEventListener('change',()=>{
+    inp.addEventListener('change',async ()=>{
       const id=+inp.dataset.id, key=inp.dataset.key; const p=P.find(x=>x.id===id);
+      if(!p) return;
       let v=parseFloat(inp.value.replace(/[^0-9.\-]/g,'')); if(isNaN(v)) v=0;
       if(key==='sf'){ p.sf=v; } else { p.data[state.year][key]=v; }
       renderKpis(); renderChart(); renderTrend();
       // update just totals/footer without losing focus target: re-render table
       const active=document.activeElement;
       renderTableKeepFocus(active);
+      try{ await saveProperty(p); }
+      catch(err){ console.error('Failed to save edit', err); showActionError('Failed to save change — it will not persist after a refresh. Please retry.'); }
+    });
+  });
+  document.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click',async e=>{
+      e.stopPropagation();
+      const id=+btn.dataset.del; const p=P.find(x=>x.id===id); if(!p) return;
+      if(!confirm(`Delete "${p.name}"? This can't be undone.`)) return;
+      try{
+        await apiDelete(`/api/properties/${id}`);
+        P=P.filter(x=>x.id!==id);
+        renderAll();
+      }catch(err){ console.error('Failed to delete property', err); showActionError('Failed to delete property. Please retry.'); }
     });
   });
 }
@@ -975,6 +652,87 @@ function renderTableKeepFocus(active){
   const key=active&&active.dataset?active.dataset.key:null;
   renderTable();
   if(id!==null){ const sel=document.querySelector(`.edit-input[data-id="${id}"][data-key="${key}"]`); if(sel){sel.focus();} }
+}
+async function saveProperty(p){
+  const updated = await apiPut(`/api/properties/${p.id}`, {name:p.name, address:p.address, sf:p.sf, flags:p.flags, data:p.data});
+  Object.assign(p, updated);
+}
+
+// ---------- Add / delete (properties + removed) ----------
+function blankYearData(){
+  const y={}; YEARS.forEach(yr=>{ y[yr]={taxes:0,insurance:0,cam:0,total:0,comments:{}}; }); return y;
+}
+function openAddPropertyModal(){
+  $('#modal').innerHTML = `
+    <div class="mh"><div><h2>Add property</h2><div class="maddr">Taxes / Insurance / CAM start at $0 — edit them afterward in Edit mode.</div></div>
+      <button class="xbtn" id="closeX">✕</button></div>
+    <div class="mbody">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <label>Property name<br><input id="npName" class="edit-input" style="width:100%;text-align:left" required></label>
+        <label>Address<br><input id="npAddress" class="edit-input" style="width:100%;text-align:left"></label>
+        <label>Square feet<br><input id="npSf" class="edit-input" type="number" min="0" step="1" style="width:160px" value="0"></label>
+      </div>
+      <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn" id="npCancel">Cancel</button>
+        <button class="btn primary" id="npSave">Add property</button>
+      </div>
+    </div>`;
+  $('#overlay').classList.add('show');
+  $('#closeX').onclick=closeDetail;
+  $('#npCancel').onclick=closeDetail;
+  $('#npSave').onclick=async ()=>{
+    const name=$('#npName').value.trim();
+    if(!name){ $('#npName').focus(); return; }
+    const address=$('#npAddress').value.trim();
+    const sf=parseFloat($('#npSf').value)||0;
+    const btn=$('#npSave'); btn.disabled=true; btn.textContent='Adding…';
+    try{
+      const created = await apiPost('/api/properties', {name, address, sf, flags:null, data:blankYearData()});
+      P.push(created);
+      closeDetail();
+      renderAll();
+    }catch(err){
+      console.error('Failed to add property', err);
+      showActionError('Failed to add property. Please retry.');
+      btn.disabled=false; btn.textContent='Add property';
+    }
+  };
+}
+function openAddRemovedModal(){
+  $('#modal').innerHTML = `
+    <div class="mh"><div><h2>Add removed property</h2></div>
+      <button class="xbtn" id="closeX">✕</button></div>
+    <div class="mbody">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <label>Property name<br><input id="nrName" class="edit-input" style="width:100%;text-align:left" required></label>
+        <label>Address<br><input id="nrAddress" class="edit-input" style="width:100%;text-align:left"></label>
+        <label>Reason removed<br><textarea id="nrReason" rows="3" style="width:100%;border:1px solid var(--green);border-radius:6px;padding:7px;font-family:inherit;font-size:13px"></textarea></label>
+      </div>
+      <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn" id="nrCancel">Cancel</button>
+        <button class="btn primary" id="nrSave">Add</button>
+      </div>
+    </div>`;
+  $('#overlay').classList.add('show');
+  $('#closeX').onclick=closeDetail;
+  $('#nrCancel').onclick=closeDetail;
+  $('#nrSave').onclick=async ()=>{
+    const name=$('#nrName').value.trim();
+    if(!name){ $('#nrName').focus(); return; }
+    const address=$('#nrAddress').value.trim();
+    const reason=$('#nrReason').value.trim();
+    const btn=$('#nrSave'); btn.disabled=true; btn.textContent='Adding…';
+    try{
+      const created = await apiPost('/api/removed', {name, address, reason});
+      REMOVED.push(created);
+      closeDetail();
+      renderRemoved();
+    }catch(err){
+      console.error('Failed to add removed property', err);
+      showActionError('Failed to add removed property. Please retry.');
+      btn.disabled=false; btn.textContent='Add';
+    }
+  };
 }
 
 // ---------- Export ----------
@@ -1000,7 +758,7 @@ function exportXlsx(){
     ws['!cols']=[{wch:38},{wch:40},{wch:11},{wch:12},{wch:12},{wch:12},{wch:12},{wch:11},{wch:12},{wch:10},{wch:11},{wch:16}];
     XLSX.utils.book_append_sheet(wb,ws,String(y));});
   const rem=[['Properties Removed From This Project'],[],['Property','Address','Reason Removed'],
-    ...DATA.removed.map(r=>[r.name,r.address,r.reason])];
+    ...REMOVED.map(r=>[r.name,r.address,r.reason])];
   const wsr=XLSX.utils.aoa_to_sheet(rem); wsr['!cols']=[{wch:42},{wch:40},{wch:90}];
   XLSX.utils.book_append_sheet(wb,wsr,'Removed Properties');
   XLSX.writeFile(wb,'CAM_Taxes_Insurance_Tracker_'+new Date().toISOString().slice(0,10)+'.xlsx');
@@ -1013,7 +771,10 @@ function exportCsv(){
 }
 
 // ---------- Events ----------
-function renderAll(){ renderKpis(); renderTable(); renderChart(); renderTrend(); }
+function renderAll(){
+  renderKpis(); renderTable(); renderChart(); renderTrend();
+  $('#footer').textContent = `Triangle Investments · CAM, Taxes & Insurance Tracker · ${P.length} properties · 2024–2025 · figures from Yardi 5000 (reimbursable) accounts`;
+}
 $('#yearSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   state.year=+b.dataset.year; $('#yearSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); renderAll();});
 $('#metricSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
@@ -1025,6 +786,17 @@ $('#thead').addEventListener('click',e=>{const th=e.target.closest('th[data-sort
   const k=th.dataset.sort; if(state.sort===k){state.dir*=-1;} else {state.sort=k; state.dir = k==='name'?1:-1;}
   $('#sortSel').value=(['name','sf','taxes','insurance','cam','total','yoy'].includes(k))?k:'total'; renderTable();});
 document.addEventListener('click',e=>{
+  const delRemoved=e.target.closest('[data-del-removed]');
+  if(delRemoved){
+    e.stopPropagation();
+    const id=+delRemoved.dataset.delRemoved; const r=REMOVED.find(x=>x.id===id); if(!r) return;
+    if(!confirm(`Delete "${r.name}" from the removed-properties list? This can't be undone.`)) return;
+    apiDelete(`/api/removed/${id}`).then(()=>{
+      REMOVED=REMOVED.filter(x=>x.id!==id);
+      renderRemoved();
+    }).catch(err=>{ console.error('Failed to delete removed property', err); showActionError('Failed to delete. Please retry.'); });
+    return;
+  }
   const openEl=e.target.closest('[data-open]');
   if(openEl && !state.edit){ openDetail(openEl.dataset.open); }
 });
@@ -1035,18 +807,20 @@ $('#editBtn').addEventListener('click',()=>{
   $('#editBtn').classList.toggle('on',state.edit);
   $('#editBtn').innerHTML = state.edit?'✓ Done editing':'✏️ Edit';
   $('#editBanner').classList.toggle('show',state.edit);
+  $('#addBtn').style.display = state.edit?'':'none';
+  $('#addRemovedBtn').style.display = state.edit?'':'none';
   renderTable();
+  renderRemoved();
 });
+$('#addBtn').addEventListener('click',openAddPropertyModal);
+$('#addRemovedBtn').addEventListener('click',openAddRemovedModal);
 $('#xlsxBtn').addEventListener('click',exportXlsx);
 $('#infoTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   state.tab=b.dataset.tab; $('#infoTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
   $('#removedPane').style.display = state.tab==='removed'?'block':'none';
   $('#methodPane').style.display = state.tab==='method'?'block':'none';});
 
-$('#footer').textContent = `Triangle Investments · CAM, Taxes & Insurance Tracker · ${P.length} properties · 2024–2025 · figures from Yardi 5000 (reimbursable) accounts`;
-
-renderRemoved();
-renderAll();
+bootstrap();
 </script>
 </body>
 </html>

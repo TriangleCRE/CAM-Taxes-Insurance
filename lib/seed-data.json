@@ -1,0 +1,397 @@
+{
+ "properties": [
+  {
+   "name": "Center - Hoy",
+   "address": "729 Richmond Ave, Staunton, VA",
+   "sf": 9840,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 7985.08,
+     "insurance": 6792,
+     "cam": 13415.53,
+     "total": 28192.61,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 8950.76,
+     "insurance": 7957,
+     "cam": 17794.79,
+     "total": 34702.55,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - 1854 E Market St",
+   "address": "1854 E Market St., Harrisonburg, VA",
+   "sf": 25422,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 41981.69,
+     "insurance": 19589.99,
+     "cam": 10229.31,
+     "total": 71800.99,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 46753.41,
+     "insurance": 17971.33,
+     "cam": 20418,
+     "total": 85142.74,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Verona",
+   "address": "465/485 Lee Hwy, Verona, VA",
+   "sf": 41063,
+   "flags": "Multi-address",
+   "data": {
+    "2024": {
+     "taxes": 19547.32,
+     "insurance": 8354.5,
+     "cam": 18028.93,
+     "total": 45930.75,
+     "comments": {
+      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel."
+     }
+    },
+    "2025": {
+     "taxes": 19443.32,
+     "insurance": 9203.5,
+     "cam": 20927.21,
+     "total": 49574.03,
+     "comments": {
+      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel."
+     }
+    }
+   }
+  },
+  {
+   "name": "Center - Elliott",
+   "address": "1100 Greenville Ave, Staunton, VA",
+   "sf": 26750,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 11974.95,
+     "insurance": 6421,
+     "cam": 11255.28,
+     "total": 29651.23,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 12942.93,
+     "insurance": 6421,
+     "cam": 13872.16,
+     "total": 33236.09,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Tire Mart",
+   "address": "1027 Richmond Ave, Staunton, VA",
+   "sf": 9820,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 16169.52,
+     "insurance": 7072,
+     "cam": 13499.46,
+     "total": 36740.98,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 17609.41,
+     "insurance": 8029,
+     "cam": 19754.59,
+     "total": 45393,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Genesis",
+   "address": "823 Richmond Ave, Staunton, VA",
+   "sf": 7450,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 5237.65,
+     "insurance": 1721.24,
+     "cam": 7012.88,
+     "total": 13971.77,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 5854.03,
+     "insurance": 2231,
+     "cam": 9009.49,
+     "total": 17094.52,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Sunnyside",
+   "address": "105 Lee Jackson Highway, Staunton, VA",
+   "sf": 9600,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 6418.36,
+     "insurance": 2705,
+     "cam": 3437.42,
+     "total": 12560.78,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 6418.36,
+     "insurance": 2705,
+     "cam": 4844.21,
+     "total": 13967.57,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Log Lot",
+   "address": "49 Lee Jackson Highway, Staunton, VA",
+   "sf": 7189.5,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 5839.08,
+     "insurance": 2815,
+     "cam": 8961.22,
+     "total": 17615.3,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 5735.08,
+     "insurance": 2815,
+     "cam": 9745.12,
+     "total": 18295.2,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Gander",
+   "address": "440 Gander Drive, Charlottesville, VA",
+   "sf": 45801,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 81873.84,
+     "insurance": 17472.4,
+     "cam": 22540.16,
+     "total": 121886.4,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 86413.14,
+     "insurance": 18654.1,
+     "cam": 48035.69,
+     "total": 153102.93,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - 2655 S Main St. Hburg",
+   "address": "2655 S Main St., Harrisonburg, VA",
+   "sf": 5770,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 14503.06,
+     "insurance": 7515.6,
+     "cam": 7652.46,
+     "total": 29671.12,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 15597.93,
+     "insurance": 6120.9,
+     "cam": 10688.2,
+     "total": 32407.03,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Building - Old Planters LLC (Starbucks)",
+   "address": "115 Lee Jackson Hwy, Staunton, VA",
+   "sf": 3374,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 6050.2,
+     "insurance": 5292,
+     "cam": 236.93,
+     "total": 11579.13,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 5946.2,
+     "insurance": 5292,
+     "cam": 0,
+     "total": 11238.2,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Building - F&M Bank",
+   "address": "2813 N Augusta St., Staunton, VA",
+   "sf": 2266,
+   "flags": "Review",
+   "data": {
+    "2024": {
+     "taxes": 0,
+     "insurance": 1194,
+     "cam": 2684.25,
+     "total": 3878.25,
+     "comments": {
+      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data."
+     }
+    },
+    "2025": {
+     "taxes": 0,
+     "insurance": 0,
+     "cam": 2903,
+     "total": 2903,
+     "comments": {
+      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data."
+     }
+    }
+   }
+  },
+  {
+   "name": "Building - Log Lot - Old Cash Advance",
+   "address": "57 Lee Jackson Highway (Unit 117), Staunton, VA",
+   "sf": 1784,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 0,
+     "insurance": 0,
+     "cam": 0,
+     "total": 0,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 1564.16,
+     "insurance": 0,
+     "cam": 0,
+     "total": 1564.16,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - 143/153 Crown Drive (Goodwill Danville)",
+   "address": "143/153 Crown Drive, Danville, VA",
+   "sf": 23015,
+   "flags": "Multi-address · Review",
+   "data": {
+    "2024": {
+     "taxes": 0,
+     "insurance": 0,
+     "cam": 0,
+     "total": 0,
+     "comments": {
+      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel."
+     }
+    },
+    "2025": {
+     "taxes": 18867.56,
+     "insurance": 9152,
+     "cam": 1232.5,
+     "total": 29252.06,
+     "comments": {
+      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel.",
+      "Insurance": "A nearly identical amount also appears in the non-reimbursable (6000) bucket for this year - possible duplicate/double entry. This figure uses the reimbursable (5000) amount only; worth a quick check before finalizing."
+     }
+    }
+   }
+  }
+ ],
+ "removed": [
+  {
+   "name": "Building - Honda Auto Body shop/Swartz",
+   "address": "2675 S Main St., Harrisonburg, VA",
+   "reason": "No Taxes, Insurance, or CAM activity recorded in Yardi for any year, despite an active long-term tenant. Tenant likely pays these costs directly outside Yardi's books."
+  },
+  {
+   "name": "Center - 210 N Central Ave / 211 N Lewis St",
+   "address": "211 N. Lewis St., Staunton, VA",
+   "reason": "No reimbursable activity in any year. Also flagged in the Master Property List reconciliation as a classification conflict - PDF lists this as \"Family Use,\" Yardi shows it fully leased. Resolve that first."
+  },
+  {
+   "name": "Center - 213 N Lewis St",
+   "address": "213 N. Lewis St., Staunton, VA",
+   "reason": "Virtually no financial data in any year. Also flagged as not present in the original PDF ownership table, tied to a tenant mix-up (Jazzercise/Staunton Strength & Fitness)."
+  },
+  {
+   "name": "Building - 5th St",
+   "address": "1113 5th St SW, Charlottesville, VA",
+   "reason": "No reimbursable data in any year. Current tenants didn't start until 2026, after this window. Address/owning entity still unconfirmed."
+  },
+  {
+   "name": "Building - Office NDEP",
+   "address": "2903 N Augusta St., Staunton, VA",
+   "reason": "This is Triangle's own office - the tenant on record is TPA itself, not a third party. No real tenant-recovery relationship to track."
+  },
+  {
+   "name": "Center - Heritage building",
+   "address": "2815-2817 N Augusta St., Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building & Bays - 808 Richmond",
+   "address": "808 Richmond Ave, Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - 802 Richmond (Dahl Invest)",
+   "address": "802 Richmond Ave, Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Caliber (Caliber Collision)",
+   "address": "1720 Seminole Trail, Charlottesville, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Wells Property/Bookstore",
+   "address": "707 Richmond Ave, Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Keys Academy",
+   "address": "81 Quicks Mill Rd, Verona, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Flow Corner",
+   "address": "1289 Stoney Point Rd, Charlottesville, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Flow Center Lot (Goodwill Pantops)",
+   "address": "1311 Stoney Point Rd, Charlottesville, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - 702 Richmond Ave",
+   "address": "702 Richmond Ave, Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  }
+ ]
+}

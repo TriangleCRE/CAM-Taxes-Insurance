@@ -1,0 +1,17 @@
+{
+  "name": "cam-taxes-insurance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Triangle Investments - CAM, Taxes & Insurance Tracker",
+  "scripts": {
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "dev": "node scripts/dev-server.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.7"
+  }
+}
