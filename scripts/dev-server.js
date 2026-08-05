@@ -33,6 +33,15 @@ function matchRoute(pathname) {
   if (m) {
     return { handler: loadHandler("../api/removed/[id].js"), params: { id: m[1] } };
   }
+  if (pathname === "/api/login") {
+    return { handler: loadHandler("../api/login.js"), params: {} };
+  }
+  if (pathname === "/api/logout") {
+    return { handler: loadHandler("../api/logout.js"), params: {} };
+  }
+  if (pathname === "/api/session") {
+    return { handler: loadHandler("../api/session.js"), params: {} };
+  }
   return null;
 }
 

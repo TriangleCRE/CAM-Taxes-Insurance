@@ -42,14 +42,42 @@ Neon/Vercel integration sets):
 - `GET /api/removed` / `POST /api/removed`
 - `GET|PUT|DELETE /api/removed/:id`
 
-There's no login/passcode gate on this site, so there's nothing the API
-needs to sit behind.
+All of the above sit behind the passcode gate (see below) — they 401 without
+a valid session.
+
+## Passcode gate
+
+The whole dashboard is gated behind a shared passcode, checked server-side
+only:
+
+- `POST /api/login` — body `{ passcode }`. Verifies against the `PASSCODE`
+  environment variable (constant-time compare) and, on success, sets a
+  signed, `HttpOnly`, `SameSite=Lax` session cookie. `PASSCODE` never reaches
+  the browser — the front end only ever sends what the visitor typed, never
+  reads the real value back.
+- `GET /api/session` — `{ authenticated: true|false }`, used by the front end
+  to decide whether to show the login screen or the dashboard on load. Not
+  itself gated (that would be circular).
+- `POST /api/logout` — clears the session cookie.
+- `lib/auth.js`'s `requireSession()` guards every `/api/properties*` and
+  `/api/removed*` route, so the data API can't be reached by working around
+  the login screen.
+
+The session token is a deterministic HMAC-SHA256 keyed by the current
+`PASSCODE` value — no session store and no separate signing secret needed,
+and rotating `PASSCODE` instantly invalidates every outstanding session. The
+cookie has no `Max-Age`, so it's a normal browser session cookie: a visitor
+stays signed in across page loads/reloads without re-entering the passcode,
+until they close the browser or click "Log out".
+
+If `PASSCODE` isn't set in the environment, the gate fails closed — nobody
+can log in, rather than accepting any passcode.
 
 ## Local development
 
 ```bash
 npm install
-cp .env.example .env.local   # point DATABASE_URL at a local Postgres
+cp .env.example .env.local   # point DATABASE_URL at a local Postgres, set PASSCODE
 npm run migrate              # optional - the app also self-heals on first request
 npm run seed                 # optional - same
 npm run dev                  # serves index.html + /api on http://localhost:3000

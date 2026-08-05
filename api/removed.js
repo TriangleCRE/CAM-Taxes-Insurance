@@ -2,8 +2,10 @@
 
 const { query } = require("../lib/db");
 const { rowToRecord, normalizeRemoved } = require("../lib/records");
+const { requireSession } = require("../lib/auth");
 
 module.exports = async (req, res) => {
+  if (!requireSession(req, res)) return;
   try {
     if (req.method === "GET") {
       const { rows } = await query(
