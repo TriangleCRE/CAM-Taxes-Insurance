@@ -2,8 +2,10 @@
 
 const { query } = require("../../lib/db");
 const { rowToRecord, normalizeRemoved } = require("../../lib/records");
+const { requireSession } = require("../../lib/auth");
 
 module.exports = async (req, res) => {
+  if (!requireSession(req, res)) return;
   const id = Number(req.query.id);
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: "Invalid removed-property id" });
