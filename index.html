@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triangle Investments — CAM, Taxes &amp; Insurance Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --green:#1A9E36; --green-d:#14822B; --green-l:#E9F6EC;
+    --charcoal:#2A2E33; --ink:#333333; --muted:#6B7480; --faint:#9AA3AD;
+    --bg:#F4F6F8; --card:#FFFFFF; --line:#E4E8EC; --line-2:#EEF1F4;
+    --tax:#2F6DB4; --tax-l:#EAF2FB; --ins:#E0A100; --ins-l:#FBF3DD; --cam:#1A9E36; --cam-l:#E9F6EC;
+    --amber:#B87500; --amber-bg:#FBF1DD; --blue:#2F6DB4; --blue-bg:#EAF2FB;
+    --pos:#C0392B; --neg:#1A9E36;
+    --shadow:0 1px 2px rgba(16,24,32,.04),0 2px 8px rgba(16,24,32,.06);
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .tnum{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  h1,h2,h3{margin:0;font-weight:650;color:var(--charcoal)}
+  a{color:var(--tax)}
+  button{font-family:inherit}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+
+  /* Header */
+  header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+  .top-in{display:flex;align-items:center;gap:20px;padding:14px 24px;max-width:1280px;margin:0 auto}
+  .brand{display:flex;align-items:center;gap:14px;min-width:0}
+  .brand img{height:38px;width:auto;display:block}
+  .brand .divider{width:1px;height:34px;background:var(--line);flex:none}
+  .brand .ttl{min-width:0}
+  .brand .ttl h1{font-size:16px;letter-spacing:-.2px;white-space:nowrap}
+  .brand .ttl p{margin:1px 0 0;font-size:12px;color:var(--muted);white-space:nowrap}
+  .top-sp{flex:1}
+  .yearseg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+  .yearseg button{border:0;background:transparent;color:var(--muted);font-weight:600;font-size:13px;
+    padding:7px 16px;border-radius:8px;cursor:pointer}
+  .yearseg button.on{background:var(--charcoal);color:#fff;box-shadow:var(--shadow)}
+
+  main{padding:24px 0 64px}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:8px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent,var(--green))}
+  .kpi .lab{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .kpi .dot{width:9px;height:9px;border-radius:3px;background:var(--accent,var(--green))}
+  .kpi .val{font-size:26px;font-weight:700;color:var(--charcoal);margin-top:8px;letter-spacing:-.5px}
+  .kpi .sub{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--muted)}
+  .chip{display:inline-flex;align-items:center;gap:3px;font-weight:700;font-size:12px;padding:2px 7px;border-radius:20px}
+  .chip.up{color:var(--pos);background:#FBEBE9}
+  .chip.down{color:var(--neg);background:var(--green-l)}
+  .chip.flat{color:var(--muted);background:var(--line-2)}
+
+  /* Toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:22px 0 14px}
+  .search{position:relative;flex:1;min-width:220px;max-width:380px}
+  .search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:14px}
+  .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--faint)}
+  .search input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px var(--green-l)}
+  select,.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--ink);cursor:pointer;font-weight:600}
+  select:focus{outline:none;border-color:var(--green)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+  .seg button{border:0;background:transparent;padding:9px 14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .seg button.on{background:var(--green-l);color:var(--green-d)}
+  .btn:hover{border-color:var(--faint)}
+  .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .btn.primary:hover{background:var(--green-d);border-color:var(--green-d)}
+  .btn.ghost.on{background:var(--charcoal);color:#fff;border-color:var(--charcoal)}
+  .toolbar .push{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+  .toggle-lab{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);font-weight:600;cursor:pointer;user-select:none}
+
+  /* Layout grid */
+  .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:start}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .panel .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .panel .ph h2{font-size:14px}
+  .panel .ph .note{font-size:12px;color:var(--muted);font-weight:500}
+
+  /* Table */
+  .tablewrap{overflow-x:auto}
+  table.data{width:100%;border-collapse:collapse;font-size:13px}
+  table.data th,table.data td{padding:10px 12px;text-align:right;white-space:nowrap}
+  table.data th:first-child,table.data td:first-child{text-align:left;white-space:normal}
+  table.data thead th{position:sticky;top:0;background:#FAFBFC;color:var(--muted);font-weight:650;font-size:11px;
+    text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+  table.data thead th .ar{opacity:.35;margin-left:3px;font-size:10px}
+  table.data thead th.sorted{color:var(--charcoal)}
+  table.data thead th.sorted .ar{opacity:1;color:var(--green)}
+  table.data tbody tr{border-bottom:1px solid var(--line-2);cursor:pointer}
+  table.data tbody tr:hover{background:#Fafcf9}
+  table.data tbody tr:last-child{border-bottom:0}
+  .pname{font-weight:650;color:var(--charcoal);display:flex;align-items:center;gap:7px}
+  .paddr{color:var(--faint);font-size:11.5px;margin-top:1px;font-weight:400}
+  td.tax b,td.ins b,td.cam b{font-weight:600}
+  .bar-cell{min-width:120px}
+  .microbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--line-2);width:100%}
+  .microbar span{display:block;height:100%}
+  .flagbadge{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;letter-spacing:.2px}
+  .fb-amber{background:var(--amber-bg);color:var(--amber)}
+  .fb-blue{background:var(--blue-bg);color:var(--blue)}
+  tfoot td{padding:11px 12px;font-weight:700;color:var(--charcoal);border-top:2px solid var(--line);background:#FAFBFC;text-align:right}
+  tfoot td:first-child{text-align:left}
+  .edit-input{width:92px;text-align:right;border:1px solid var(--green);border-radius:6px;padding:5px 7px;font-size:13px;
+    font-variant-numeric:tabular-nums;background:#fff;color:var(--ink)}
+  .edit-input:focus{outline:none;box-shadow:0 0 0 3px var(--green-l)}
+  .edit-input.sf{width:74px}
+  tr.editrow td{background:#FBFEFB}
+
+  /* Chart */
+  .chart{padding:10px 18px 18px}
+  .chartrow{display:grid;grid-template-columns:150px 1fr 82px;align-items:center;gap:10px;padding:6px 0;cursor:pointer}
+  .chartrow:hover .clab{color:var(--green-d)}
+  .clab{font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ctrack{background:var(--line-2);border-radius:5px;height:20px;display:flex;overflow:hidden}
+  .ctrack span{height:100%}
+  .cval{font-size:12px;font-weight:700;color:var(--charcoal);text-align:right}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;padding:0 18px 4px;font-size:12px;color:var(--muted)}
+  .legend .lg{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+  .legend .sw{width:11px;height:11px;border-radius:3px}
+
+  /* Secondary sections */
+  .subgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+  .listitem{padding:12px 18px;border-bottom:1px solid var(--line-2)}
+  .listitem:last-child{border-bottom:0}
+  .listitem .li-t{font-weight:650;color:var(--charcoal);font-size:13px}
+  .listitem .li-a{color:var(--faint);font-size:11.5px;margin:1px 0 5px}
+  .listitem .li-r{color:var(--muted);font-size:12.5px;line-height:1.5}
+  .method{padding:6px 18px 16px;font-size:13px;color:var(--ink)}
+  .method h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:16px 0 6px}
+  .method p{margin:6px 0;line-height:1.55}
+  .method .k{color:var(--amber);font-weight:700}
+  .method .kb{color:var(--blue);font-weight:700}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(20,26,32,.55);backdrop-filter:blur(2px);z-index:100;
+    display:none;align-items:flex-start;justify-content:center;padding:40px 20px;overflow:auto}
+  .overlay.show{display:flex}
+  .modal{background:var(--card);border-radius:16px;max-width:760px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .modal .mh{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .modal .mh h2{font-size:19px;letter-spacing:-.3px}
+  .modal .mh .maddr{color:var(--muted);font-size:13px;margin-top:3px}
+  .modal .mh .msf{color:var(--faint);font-size:12px;margin-top:6px}
+  .xbtn{border:0;background:var(--bg);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:18px;color:var(--muted);flex:none}
+  .xbtn:hover{background:var(--line)}
+  .mbody{padding:20px 24px}
+  .cmpgrid{display:grid;grid-template-columns:1.1fr auto auto auto;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13px}
+  .cmpgrid .c{padding:11px 14px;border-bottom:1px solid var(--line-2);text-align:right;font-variant-numeric:tabular-nums}
+  .cmpgrid .c.h{background:#FAFBFC;font-weight:700;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line)}
+  .cmpgrid .c.l{text-align:left;font-weight:600;color:var(--ink)}
+  .cmpgrid .c.tot{font-weight:800;color:var(--charcoal);background:#FAFBFC;border-top:1px solid var(--line);border-bottom:0}
+  .flagcallout{margin-top:18px;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.55}
+  .flagcallout.amber{background:var(--amber-bg);border:1px solid #F0DCB0}
+  .flagcallout.blue{background:var(--blue-bg);border:1px solid #CFE1F5}
+  .flagcallout .ftt{font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+  .flagcallout.amber .ftt{color:var(--amber)} .flagcallout.blue .ftt{color:var(--blue)}
+  .flagcallout .cmt{color:var(--ink);margin-top:6px}
+  .flagcallout .cmt b{color:var(--charcoal)}
+
+  .footer{color:var(--faint);font-size:12px;text-align:center;padding:26px 0 8px}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .tabs{display:flex;gap:4px}
+  .tabs button{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
+  .tabs button.on{background:var(--charcoal);color:#fff;border-color:var(--charcoal)}
+  .banner{display:none;align-items:center;gap:10px;background:var(--green-l);border:1px solid #BFE6C8;color:var(--green-d);
+    border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600;margin-bottom:14px}
+  .banner.show{display:flex}
+  @media(max-width:960px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.subgrid{grid-template-columns:1fr}
+    .brand .ttl p{display:none}}
+  @media(max-width:560px){.kpis{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <img src="data:image/png;base64,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" alt="Triangle Investment Group">
+      <div class="divider"></div>
+      <div class="ttl">
+        <h1>CAM, Taxes &amp; Insurance Tracker</h1>
+        <p>Triangle Investments (TPA LLC) · Yardi 5000 reimbursable accounts</p>
+      </div>
+    </div>
+    <div class="top-sp"></div>
+    <div class="yearseg" id="yearSeg">
+      <button data-year="2024">2024</button>
+      <button data-year="2025" class="on">2025</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="banner" id="editBanner">
+    <span>✏️ Edit mode is on — change any Taxes, Insurance, CAM or Square Feet value. Totals, $/SF and charts recalculate live. Export to Excel when done.</span>
+  </div>
+
+  <section class="kpis" id="kpis"></section>
+
+  <div class="toolbar">
+    <div class="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+      <input id="search" type="text" placeholder="Search property or address…">
+    </div>
+    <div class="seg" id="metricSeg" title="Show dollar totals or dollars per square foot">
+      <button data-metric="total" class="on">Total&nbsp;$</button>
+      <button data-metric="persf">$ / SF</button>
+    </div>
+    <select id="sortSel" title="Sort properties">
+      <option value="total">Sort: Total (high→low)</option>
+      <option value="taxes">Sort: Taxes</option>
+      <option value="insurance">Sort: Insurance</option>
+      <option value="cam">Sort: CAM</option>
+      <option value="sf">Sort: Square Feet</option>
+      <option value="name">Sort: Property (A→Z)</option>
+      <option value="yoy">Sort: YoY change</option>
+    </select>
+    <label class="toggle-lab"><input type="checkbox" id="flagChk"> Flagged only</label>
+    <div class="push">
+      <button class="btn ghost" id="editBtn">✏️ Edit</button>
+      <button class="btn primary" id="xlsxBtn">⬇ Export to Excel</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="ph">
+        <h2>Properties <span class="note" id="tblCount"></span></h2>
+        <span class="note" id="tblYear"></span>
+      </div>
+      <div class="tablewrap">
+        <table class="data" id="tbl">
+          <thead id="thead"></thead>
+          <tbody id="tbody"></tbody>
+          <tfoot id="tfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph">
+        <h2 id="chartTitle">Cost by property</h2>
+        <span class="note">Click a bar for detail</span>
+      </div>
+      <div class="legend">
+        <span class="lg"><span class="sw" style="background:var(--tax)"></span>Taxes</span>
+        <span class="lg"><span class="sw" style="background:var(--ins)"></span>Insurance</span>
+        <span class="lg"><span class="sw" style="background:var(--cam)"></span>CAM</span>
+      </div>
+      <div class="chart" id="chart"></div>
+    </div>
+  </div>
+
+  <div class="subgrid">
+    <div class="panel">
+      <div class="ph">
+        <div class="tabs" id="infoTabs">
+          <button data-tab="removed" class="on">Removed properties (14)</button>
+          <button data-tab="method">Notes &amp; methodology</button>
+        </div>
+      </div>
+      <div id="removedPane"></div>
+      <div id="methodPane" class="method" style="display:none"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>Portfolio at a glance</h2><span class="note">2024 → 2025</span></div>
+      <div class="chart" id="trendChart"></div>
+    </div>
+  </div>
+
+  <div class="footer" id="footer"></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script id="DATA" type="application/json">{
+ "properties": [
+  {
+   "name": "Center - Hoy",
+   "address": "729 Richmond Ave, Staunton, VA",
+   "sf": 9840,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 7985.08,
+     "insurance": 6792,
+     "cam": 13415.53,
+     "total": 28192.61,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 8950.76,
+     "insurance": 7957,
+     "cam": 17794.79,
+     "total": 34702.55,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - 1854 E Market St",
+   "address": "1854 E Market St., Harrisonburg, VA",
+   "sf": 25422,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 41981.69,
+     "insurance": 19589.99,
+     "cam": 10229.31,
+     "total": 71800.99,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 46753.41,
+     "insurance": 17971.33,
+     "cam": 20418,
+     "total": 85142.74,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Verona",
+   "address": "465/485 Lee Hwy, Verona, VA",
+   "sf": 41063,
+   "flags": "Multi-address",
+   "data": {
+    "2024": {
+     "taxes": 19547.32,
+     "insurance": 8354.5,
+     "cam": 18028.93,
+     "total": 45930.75,
+     "comments": {
+      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel."
+     }
+    },
+    "2025": {
+     "taxes": 19443.32,
+     "insurance": 9203.5,
+     "cam": 20927.21,
+     "total": 49574.03,
+     "comments": {
+      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel."
+     }
+    }
+   }
+  },
+  {
+   "name": "Center - Elliott",
+   "address": "1100 Greenville Ave, Staunton, VA",
+   "sf": 26750,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 11974.95,
+     "insurance": 6421,
+     "cam": 11255.28,
+     "total": 29651.23,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 12942.93,
+     "insurance": 6421,
+     "cam": 13872.16,
+     "total": 33236.09,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Tire Mart",
+   "address": "1027 Richmond Ave, Staunton, VA",
+   "sf": 9820,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 16169.52,
+     "insurance": 7072,
+     "cam": 13499.46,
+     "total": 36740.98,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 17609.41,
+     "insurance": 8029,
+     "cam": 19754.59,
+     "total": 45393,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Genesis",
+   "address": "823 Richmond Ave, Staunton, VA",
+   "sf": 7450,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 5237.65,
+     "insurance": 1721.24,
+     "cam": 7012.88,
+     "total": 13971.77,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 5854.03,
+     "insurance": 2231,
+     "cam": 9009.49,
+     "total": 17094.52,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Sunnyside",
+   "address": "105 Lee Jackson Highway, Staunton, VA",
+   "sf": 9600,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 6418.36,
+     "insurance": 2705,
+     "cam": 3437.42,
+     "total": 12560.78,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 6418.36,
+     "insurance": 2705,
+     "cam": 4844.21,
+     "total": 13967.57,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Log Lot",
+   "address": "49 Lee Jackson Highway, Staunton, VA",
+   "sf": 7189.5,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 5839.08,
+     "insurance": 2815,
+     "cam": 8961.22,
+     "total": 17615.3,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 5735.08,
+     "insurance": 2815,
+     "cam": 9745.12,
+     "total": 18295.2,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - Gander",
+   "address": "440 Gander Drive, Charlottesville, VA",
+   "sf": 45801,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 81873.84,
+     "insurance": 17472.4,
+     "cam": 22540.16,
+     "total": 121886.4,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 86413.14,
+     "insurance": 18654.1,
+     "cam": 48035.69,
+     "total": 153102.93,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - 2655 S Main St. Hburg",
+   "address": "2655 S Main St., Harrisonburg, VA",
+   "sf": 5770,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 14503.06,
+     "insurance": 7515.6,
+     "cam": 7652.46,
+     "total": 29671.12,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 15597.93,
+     "insurance": 6120.9,
+     "cam": 10688.2,
+     "total": 32407.03,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Building - Old Planters LLC (Starbucks)",
+   "address": "115 Lee Jackson Hwy, Staunton, VA",
+   "sf": 3374,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 6050.2,
+     "insurance": 5292,
+     "cam": 236.93,
+     "total": 11579.13,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 5946.2,
+     "insurance": 5292,
+     "cam": 0,
+     "total": 11238.2,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Building - F&M Bank",
+   "address": "2813 N Augusta St., Staunton, VA",
+   "sf": 2266,
+   "flags": "Review",
+   "data": {
+    "2024": {
+     "taxes": 0,
+     "insurance": 1194,
+     "cam": 2684.25,
+     "total": 3878.25,
+     "comments": {
+      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data."
+     }
+    },
+    "2025": {
+     "taxes": 0,
+     "insurance": 0,
+     "cam": 2903,
+     "total": 2903,
+     "comments": {
+      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data."
+     }
+    }
+   }
+  },
+  {
+   "name": "Building - Log Lot - Old Cash Advance",
+   "address": "57 Lee Jackson Highway (Unit 117), Staunton, VA",
+   "sf": 1784,
+   "flags": null,
+   "data": {
+    "2024": {
+     "taxes": 0,
+     "insurance": 0,
+     "cam": 0,
+     "total": 0,
+     "comments": {}
+    },
+    "2025": {
+     "taxes": 1564.16,
+     "insurance": 0,
+     "cam": 0,
+     "total": 1564.16,
+     "comments": {}
+    }
+   }
+  },
+  {
+   "name": "Center - 143/153 Crown Drive (Goodwill Danville)",
+   "address": "143/153 Crown Drive, Danville, VA",
+   "sf": 23015,
+   "flags": "Multi-address \u00b7 Review",
+   "data": {
+    "2024": {
+     "taxes": 0,
+     "insurance": 0,
+     "cam": 0,
+     "total": 0,
+     "comments": {
+      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel."
+     }
+    },
+    "2025": {
+     "taxes": 18867.56,
+     "insurance": 9152,
+     "cam": 1232.5,
+     "total": 29252.06,
+     "comments": {
+      "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel.",
+      "Insurance": "A nearly identical amount also appears in the non-reimbursable (6000) bucket for this year - possible duplicate/double entry. This figure uses the reimbursable (5000) amount only; worth a quick check before finalizing."
+     }
+    }
+   }
+  }
+ ],
+ "removed": [
+  {
+   "name": "Building - Honda Auto Body shop/Swartz",
+   "address": "2675 S Main St., Harrisonburg, VA",
+   "reason": "No Taxes, Insurance, or CAM activity recorded in Yardi for any year, despite an active long-term tenant. Tenant likely pays these costs directly outside Yardi's books."
+  },
+  {
+   "name": "Center - 210 N Central Ave / 211 N Lewis St",
+   "address": "211 N. Lewis St., Staunton, VA",
+   "reason": "No reimbursable activity in any year. Also flagged in the Master Property List reconciliation as a classification conflict - PDF lists this as \"Family Use,\" Yardi shows it fully leased. Resolve that first."
+  },
+  {
+   "name": "Center - 213 N Lewis St",
+   "address": "213 N. Lewis St., Staunton, VA",
+   "reason": "Virtually no financial data in any year. Also flagged as not present in the original PDF ownership table, tied to a tenant mix-up (Jazzercise/Staunton Strength & Fitness)."
+  },
+  {
+   "name": "Building - 5th St",
+   "address": "1113 5th St SW, Charlottesville, VA",
+   "reason": "No reimbursable data in any year. Current tenants didn't start until 2026, after this window. Address/owning entity still unconfirmed."
+  },
+  {
+   "name": "Building - Office NDEP",
+   "address": "2903 N Augusta St., Staunton, VA",
+   "reason": "This is Triangle's own office - the tenant on record is TPA itself, not a third party. No real tenant-recovery relationship to track."
+  },
+  {
+   "name": "Center - Heritage building",
+   "address": "2815-2817 N Augusta St., Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building & Bays - 808 Richmond",
+   "address": "808 Richmond Ave, Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - 802 Richmond (Dahl Invest)",
+   "address": "802 Richmond Ave, Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Caliber (Caliber Collision)",
+   "address": "1720 Seminole Trail, Charlottesville, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Wells Property/Bookstore",
+   "address": "707 Richmond Ave, Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Keys Academy",
+   "address": "81 Quicks Mill Rd, Verona, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Flow Corner",
+   "address": "1289 Stoney Point Rd, Charlottesville, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - Flow Center Lot (Goodwill Pantops)",
+   "address": "1311 Stoney Point Rd, Charlottesville, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  },
+  {
+   "name": "Building - 702 Richmond Ave",
+   "address": "702 Richmond Ave, Staunton, VA",
+   "reason": "Removed from the updated property list - not tracked/reconciled at the property level."
+  }
+ ]
+}</script>
+<script>
+"use strict";
+const DATA = JSON.parse(document.getElementById('DATA').textContent);
+const P = DATA.properties;
+const YEARS = [2024,2025];
+// give each property a stable id
+P.forEach((p,i)=>{p.id=i;});
+
+const state = { year:2025, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed' };
+
+const CAT = {taxes:{c:'var(--tax)',l:'Taxes'}, insurance:{c:'var(--ins)',l:'Insurance'}, cam:{c:'var(--cam)',l:'CAM'}};
+const $ = s=>document.querySelector(s);
+
+// ---------- helpers ----------
+function usd(n,dec=0){ if(n===null||n===undefined||isNaN(n)) return '—';
+  return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
+function psf(n){ if(!isFinite(n)||n===0) return (n===0?'$0.00':'—'); return '$'+Number(n).toFixed(2); }
+function rec(p,y){ return p.data[y] || {taxes:0,insurance:0,cam:0,comments:{}}; }
+function total(p,y){ const r=rec(p,y); return (+r.taxes||0)+(+r.insurance||0)+(+r.cam||0); }
+function perSf(v,sf){ return sf>0 ? v/sf : 0; }
+function metricVal(p,y,key){ // key in taxes/insurance/cam/total
+  const r=rec(p,y); const raw = key==='total'? total(p,y) : (+r[key]||0);
+  return state.metric==='persf' ? perSf(raw, p.sf) : raw;
+}
+function fmtMetric(v){ return state.metric==='persf' ? psf(v) : usd(v); }
+function flagsOf(p){ const f=(p.flags||'').toLowerCase(); return {multi:f.includes('multi'), review:f.includes('review')}; }
+function yoyPct(p){ const a=total(p,2024), b=total(p,2025); if(!a) return null; return (b-a)/a; }
+
+// ---------- KPI ----------
+function renderKpis(){
+  const y=state.year, py=y-1;
+  const sum=(y,k)=>P.reduce((s,p)=> s + (k==='total'?total(p,y):(+rec(p,y)[k]||0)),0);
+  const sf=P.reduce((s,p)=>s+(+p.sf||0),0);
+  const defs=[
+    {k:'taxes',lab:'Taxes',c:'var(--tax)'},
+    {k:'insurance',lab:'Insurance',c:'var(--ins)'},
+    {k:'cam',lab:'CAM',c:'var(--cam)'},
+    {k:'total',lab:'Portfolio Total',c:'var(--charcoal)'},
+  ];
+  $('#kpis').innerHTML = defs.map(d=>{
+    const cur=sum(y,d.k), prev = YEARS.includes(py)?sum(py,d.k):null;
+    let chip='';
+    if(prev!==null && prev!==0){
+      const pct=(cur-prev)/prev; const up=pct>0.0005, dn=pct<-0.0005;
+      const cls=up?'up':dn?'down':'flat'; const ar=up?'▲':dn?'▼':'—';
+      chip=`<span class="chip ${cls}">${ar} ${Math.abs(pct*100).toFixed(1)}%</span><span>vs ${py}</span>`;
+    } else { chip=`<span>&nbsp;</span>`; }
+    const blended = sf>0 ? cur/sf : 0;
+    return `<div class="kpi" style="--accent:${d.c}">
+      <div class="lab"><span class="dot"></span>${d.lab} · ${y}</div>
+      <div class="val tnum">${usd(cur)}</div>
+      <div class="sub">${chip} · <span class="tnum">${psf(blended)}/SF</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ---------- Table ----------
+const COLS = [
+  {k:'name',lab:'Property',num:false},
+  {k:'sf',lab:'Sq Ft',num:true},
+  {k:'taxes',lab:'Taxes',num:true,cat:true},
+  {k:'insurance',lab:'Insurance',num:true,cat:true},
+  {k:'cam',lab:'CAM',num:true,cat:true},
+  {k:'total',lab:'Total',num:true},
+  {k:'bar',lab:'Mix',num:false},
+];
+function filteredProps(){
+  let list=P.slice();
+  const q=state.search.trim().toLowerCase();
+  if(q) list=list.filter(p=> (p.name+' '+(p.address||'')).toLowerCase().includes(q));
+  if(state.flaggedOnly) list=list.filter(p=>{const f=flagsOf(p);return f.multi||f.review;});
+  const y=state.year, dir=state.dir;
+  list.sort((a,b)=>{
+    let va,vb;
+    switch(state.sort){
+      case 'name': return dir * a.name.localeCompare(b.name);
+      case 'sf': va=+a.sf; vb=+b.sf; break;
+      case 'yoy': va=yoyPct(a)??-Infinity; vb=yoyPct(b)??-Infinity; break;
+      case 'taxes': case 'insurance': case 'cam': va=+rec(a,y)[state.sort]||0; vb=+rec(b,y)[state.sort]||0; break;
+      default: va=total(a,y); vb=total(b,y);
+    }
+    return dir*(va-vb);
+  });
+  return list;
+}
+function renderTable(){
+  const y=state.year, list=filteredProps();
+  // header
+  $('#thead').innerHTML = '<tr>'+COLS.map(c=>{
+    if(c.k==='bar') return `<th style="cursor:default">Mix</th>`;
+    const sorted = state.sort===c.k || (c.k==='total'&&state.sort==='total');
+    const ar = sorted ? (state.dir<0?'▼':'▲') : '▲';
+    return `<th data-sort="${c.k}" class="${sorted?'sorted':''}">${c.lab}<span class="ar">${ar}</span></th>`;
+  }).join('')+'</tr>';
+
+  if(!list.length){ $('#tbody').innerHTML=`<tr><td colspan="7"><div class="empty">No properties match “${state.search}”.</div></td></tr>`; $('#tfoot').innerHTML=''; }
+  else {
+  $('#tbody').innerHTML = list.map(p=>{
+    const r=rec(p,y), t=total(p,y), sf=+p.sf||0;
+    const f=flagsOf(p);
+    let badges='';
+    if(f.multi) badges+=`<span class="flagbadge fb-blue" title="Multi-address — confirm SF">▦ Multi</span>`;
+    if(f.review) badges+=`<span class="flagbadge fb-amber" title="Flagged for review">⚑ Review</span>`;
+    const mv = state.metric==='persf';
+    const cell=(key)=>{
+      const raw=+r[key]||0; const val = mv? perSf(raw,sf):raw;
+      if(state.edit) return `<input class="edit-input tnum" data-id="${p.id}" data-key="${key}" value="${raw}">`;
+      return `<span class="tnum">${mv?psf(val):usd(raw)}</span>`;
+    };
+    const sfCell = state.edit ? `<input class="edit-input sf tnum" data-id="${p.id}" data-key="sf" value="${sf}">`
+                              : `<span class="tnum">${sf.toLocaleString()}</span>`;
+    const totVal = mv? perSf(t,sf):t;
+    // mix microbar
+    const parts=['taxes','insurance','cam'].map(k=>({k,v:+r[k]||0}));
+    const denom=t||1;
+    const bar=`<div class="microbar" title="Taxes ${usd(r.taxes)} · Ins ${usd(r.insurance)} · CAM ${usd(r.cam)}">`+
+      parts.map(pt=>`<span style="width:${(pt.v/denom*100)}%;background:${CAT[pt.k].c}"></span>`).join('')+`</div>`;
+    return `<tr class="${state.edit?'editrow':''}" data-open="${p.id}">
+      <td><div class="pname">${p.name}</div><div class="paddr">${p.address||''} ${badges}</div></td>
+      <td>${sfCell}</td>
+      <td class="tax">${cell('taxes')}</td>
+      <td class="ins">${cell('insurance')}</td>
+      <td class="cam">${cell('cam')}</td>
+      <td><b class="tnum">${mv?psf(totVal):usd(t)}</b></td>
+      <td class="bar-cell">${bar}</td>
+    </tr>`;
+  }).join('');
+  // footer totals
+  const sums=list.reduce((a,p)=>{const r=rec(p,y);a.tax+=+r.taxes||0;a.ins+=+r.insurance||0;a.cam+=+r.cam||0;a.sf+=+p.sf||0;return a;},{tax:0,ins:0,cam:0,sf:0});
+  const gt=sums.tax+sums.ins+sums.cam;
+  const mv=state.metric==='persf';
+  const f=(v)=> mv? psf(sums.sf?v/sums.sf:0) : usd(v);
+  $('#tfoot').innerHTML = `<tr>
+     <td>Total · ${list.length} ${list.length===1?'property':'properties'}</td>
+     <td class="tnum">${sums.sf.toLocaleString()}</td>
+     <td class="tnum">${f(sums.tax)}</td>
+     <td class="tnum">${f(sums.ins)}</td>
+     <td class="tnum">${f(sums.cam)}</td>
+     <td class="tnum">${f(gt)}</td><td></td></tr>`;
+  }
+  $('#tblCount').textContent = `· ${list.length} shown`;
+  $('#tblYear').textContent = state.metric==='persf'?`${y} · $ per sq ft`:`${y} · dollars`;
+  bindEdit();
+}
+
+// ---------- Chart (stacked bars) ----------
+function renderChart(){
+  const y=state.year, mv=state.metric==='persf';
+  let list=filteredProps();
+  // chart sorted by displayed total desc regardless of table sort dir for readability
+  list=list.slice().sort((a,b)=> (mv?perSf(total(b,y),b.sf):total(b,y)) - (mv?perSf(total(a,y),a.sf):total(a,y)) );
+  const maxV=Math.max(1,...list.map(p=> mv?perSf(total(p,y),p.sf):total(p,y)));
+  $('#chartTitle').textContent = mv? `Cost per sq ft · ${y}` : `Cost by property · ${y}`;
+  if(!list.length){ $('#chart').innerHTML=`<div class="empty">Nothing to chart.</div>`; return; }
+  $('#chart').innerHTML = list.map(p=>{
+    const r=rec(p,y); const sf=+p.sf||0;
+    const seg=k=>{ const raw=+r[k]||0; const v=mv?perSf(raw,sf):raw; return v/maxV*100; };
+    const tot = mv?perSf(total(p,y),sf):total(p,y);
+    return `<div class="chartrow" data-open="${p.id}" title="${p.name}">
+      <div class="clab">${p.name.replace(/^Center - |^Building - /,'')}</div>
+      <div class="ctrack">
+        <span style="width:${seg('taxes')}%;background:var(--tax)"></span>
+        <span style="width:${seg('insurance')}%;background:var(--ins)"></span>
+        <span style="width:${seg('cam')}%;background:var(--cam)"></span>
+      </div>
+      <div class="cval tnum">${mv?psf(tot):usd(tot)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ---------- Trend (portfolio 2024 v 2025) ----------
+function renderTrend(){
+  const cats=['taxes','insurance','cam'];
+  const sum=(y,k)=>P.reduce((s,p)=>s+(+rec(p,y)[k]||0),0);
+  const max=Math.max(...YEARS.flatMap(y=>cats.map(k=>sum(y,k))));
+  const grand=y=>cats.reduce((s,k)=>s+sum(y,k),0);
+  $('#trendChart').innerHTML =
+    `<div style="font-size:12px;color:var(--muted);margin:4px 0 10px">Reimbursable cost by category — full portfolio</div>`+
+    cats.map(k=>{
+      const rows=YEARS.map(y=>{const v=sum(y,k);return `<div class="chartrow" style="cursor:default;grid-template-columns:48px 1fr 92px">
+        <div class="clab" style="color:var(--muted)">${y}</div>
+        <div class="ctrack"><span style="width:${v/max*100}%;background:${CAT[k].c}"></span></div>
+        <div class="cval tnum">${usd(v)}</div></div>`;}).join('');
+      return `<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--charcoal);display:flex;align-items:center;gap:6px"><span class="sw" style="width:11px;height:11px;border-radius:3px;background:${CAT[k].c}"></span>${CAT[k].l}</div>${rows}</div>`;
+    }).join('')+
+    `<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:10px;display:flex;justify-content:space-between;font-weight:700;color:var(--charcoal)">
+      <span>Portfolio total</span>
+      <span class="tnum">${usd(grand(2024))} → ${usd(grand(2025))} <span class="chip ${grand(2025)>grand(2024)?'up':'down'}">▲ ${(((grand(2025)-grand(2024))/grand(2024))*100).toFixed(1)}%</span></span>
+    </div>`;
+}
+
+// ---------- Removed + method ----------
+function renderRemoved(){
+  $('#removedPane').innerHTML = DATA.removed.map(r=>`<div class="listitem">
+    <div class="li-t">${r.name}</div><div class="li-a">${r.address||''}</div>
+    <div class="li-r">${r.reason||''}</div></div>`).join('');
+  $('#methodPane').innerHTML = `
+    <h3>Scope</h3><p>14 properties, 2024–2025. Property list and years reflect the reviewed feedback; see the Removed Properties tab for the 14 exclusions and why.</p>
+    <h3>How Taxes, Insurance &amp; CAM are calculated</h3>
+    <p>All three figures come from the <b>5000 (reimbursable) accounts only</b> in each property's Yardi annual statement — consistent with what feeds the CAM reconciliations. Non-reimbursable (6000-account) activity is intentionally excluded, even where it exists.</p>
+    <p><b>CAM</b> = Total Reimbursable Expenses minus the reimbursable Insurance and Tax lines — i.e. the CAM-tagged line items only (Repairs-CAM, Grounds Maintenance-CAM, etc.).</p>
+    <h3>Square footage</h3>
+    <p>All properties use the square footage listed in Yardi, for consistency with the CAM reconciliations.</p>
+    <h3>Flags</h3>
+    <p><span class="kb">▦ Multi-address</span> — the name/address lists more than one street number; confirm the SF represents the correct/combined parcel.</p>
+    <p><span class="k">⚑ Review</span> — a data anomaly (unexplained $0, possible duplicate posting, etc.).</p>
+    <h3>Worth a closer look</h3>
+    <p><b>Center · 143/153 Crown Drive (Goodwill Danville):</b> tenant started 8/2025, so 2024 is legitimately blank (pre-lease). 2025 Insurance has a near-duplicate amount sitting in the non-reimbursable bucket.</p>
+    <p><b>Building · Log Lot · Old Cash Advance:</b> current tenant only moved in 8/2025, so 2024 reflects a prior tenant/vacancy rather than a data gap.</p>
+    <p><b>Building · F&amp;M Bank:</b> $0 Property Tax in both years and $0 Insurance in 2025 — likely a tenant-direct-pay arrangement rather than missing data.</p>`;
+}
+
+// ---------- Detail modal ----------
+function openDetail(id){
+  const p=P.find(x=>x.id==id); if(!p) return;
+  const f=flagsOf(p);
+  let badges='';
+  if(f.multi) badges+=`<span class="flagbadge fb-blue">▦ Multi-address</span> `;
+  if(f.review) badges+=`<span class="flagbadge fb-amber">⚑ Review</span>`;
+  const row=(label,key)=>{
+    const a=+rec(p,2024)[key]||(key==='total'?total(p,2024):0);
+    const av = key==='total'?total(p,2024):(+rec(p,2024)[key]||0);
+    const bv = key==='total'?total(p,2025):(+rec(p,2025)[key]||0);
+    const d=bv-av; const pct=av? (d/av*100):null;
+    const chip = pct===null? '<span class="chip flat">new</span>'
+      : `<span class="chip ${d>0?'up':d<0?'down':'flat'}">${d>0?'▲':d<0?'▼':'—'} ${Math.abs(pct).toFixed(1)}%</span>`;
+    const cls = key==='total'?' tot':'';
+    return `<div class="c l${cls}">${label}</div>
+            <div class="c${cls} tnum">${usd(av)}</div>
+            <div class="c${cls} tnum">${usd(bv)}</div>
+            <div class="c${cls}">${chip}</div>`;
+  };
+  const persfRow=(label,key)=>{
+    const av=(key==='total'?total(p,2024):(+rec(p,2024)[key]||0))/(p.sf||1);
+    const bv=(key==='total'?total(p,2025):(+rec(p,2025)[key]||0))/(p.sf||1);
+    return `<div class="c l">${label}</div><div class="c tnum">${psf(av)}</div><div class="c tnum">${psf(bv)}</div><div class="c"></div>`;
+  };
+  // flag comments
+  let callouts='';
+  YEARS.forEach(y=>{
+    const cm=rec(p,y).comments||{};
+    Object.entries(cm).forEach(([field,txt])=>{
+      const isBlue=/multi|parcel|address/i.test(txt);
+      callouts+=`<div class="flagcallout ${isBlue?'blue':'amber'}">
+        <div class="ftt">${isBlue?'▦':'⚑'} ${field} · ${y}</div>
+        <div class="cmt">${txt}</div></div>`;
+    });
+  });
+  $('#modal').innerHTML = `
+    <div class="mh">
+      <div>
+        <h2>${p.name}</h2>
+        <div class="maddr">${p.address||''}</div>
+        <div class="msf">${(+p.sf||0).toLocaleString()} sq ft ${badges?'· '+badges:''}</div>
+      </div>
+      <button class="xbtn" id="closeX">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="cmpgrid">
+        <div class="c l h">Line item</div><div class="c h">2024</div><div class="c h">2025</div><div class="c h">Change</div>
+        ${row('Taxes','taxes')}
+        ${row('Insurance','insurance')}
+        ${row('CAM','cam')}
+        ${row('Total','total')}
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:18px 0 6px">Per square foot</div>
+      <div class="cmpgrid">
+        <div class="c l h">Line item</div><div class="c h">2024 $/SF</div><div class="c h">2025 $/SF</div><div class="c h"></div>
+        ${persfRow('Taxes','taxes')}
+        ${persfRow('Insurance','insurance')}
+        ${persfRow('CAM','cam')}
+        ${persfRow('Total','total')}
+      </div>
+      ${callouts||''}
+    </div>`;
+  $('#overlay').classList.add('show');
+  $('#closeX').onclick=closeDetail;
+}
+function closeDetail(){ $('#overlay').classList.remove('show'); }
+
+// ---------- Edit ----------
+function bindEdit(){
+  document.querySelectorAll('.edit-input').forEach(inp=>{
+    inp.addEventListener('click',e=>e.stopPropagation());
+    inp.addEventListener('change',()=>{
+      const id=+inp.dataset.id, key=inp.dataset.key; const p=P.find(x=>x.id===id);
+      let v=parseFloat(inp.value.replace(/[^0-9.\-]/g,'')); if(isNaN(v)) v=0;
+      if(key==='sf'){ p.sf=v; } else { p.data[state.year][key]=v; }
+      renderKpis(); renderChart(); renderTrend();
+      // update just totals/footer without losing focus target: re-render table
+      const active=document.activeElement;
+      renderTableKeepFocus(active);
+    });
+  });
+}
+function renderTableKeepFocus(active){
+  const id=active&&active.dataset?active.dataset.id:null;
+  const key=active&&active.dataset?active.dataset.key:null;
+  renderTable();
+  if(id!==null){ const sel=document.querySelector(`.edit-input[data-id="${id}"][data-key="${key}"]`); if(sel){sel.focus();} }
+}
+
+// ---------- Export ----------
+function buildAOA(year){
+  const head1=['CAM, Taxes & Insurance by Property — '+year];
+  const head2=['Triangle Investments (TPA LLC) | Source: Yardi property-level annual statements, 5000 (reimbursable) accounts only'];
+  const cols=['Property','Address','Square Feet','Taxes','Insurance','CAM','Total',
+              'Taxes $/SF','Insurance $/SF','CAM $/SF','Total $/SF','Flags'];
+  const rows=P.map(p=>{const r=rec(p,year),sf=+p.sf||0,t=total(p,year);
+    return [p.name,p.address,sf,round(+r.taxes||0),round(+r.insurance||0),round(+r.cam||0),round(t),
+      round(perSf(+r.taxes||0,sf),2),round(perSf(+r.insurance||0,sf),2),round(perSf(+r.cam||0,sf),2),round(perSf(t,sf),2),p.flags||''];});
+  const tot=P.reduce((a,p)=>{const r=rec(p,year);a.t+=+r.taxes||0;a.i+=+r.insurance||0;a.c+=+r.cam||0;a.sf+=+p.sf||0;return a;},{t:0,i:0,c:0,sf:0});
+  const gt=tot.t+tot.i+tot.c;
+  const totrow=['PORTFOLIO TOTAL / BLENDED $ PER SF','',tot.sf,round(tot.t),round(tot.i),round(tot.c),round(gt),
+    round(tot.t/tot.sf,2),round(tot.i/tot.sf,2),round(tot.c/tot.sf,2),round(gt/tot.sf,2),''];
+  return [head1,head2,[],cols,...rows,[],totrow];
+}
+function round(n,d=2){return Math.round((n+Number.EPSILON)*10**d)/10**d;}
+function exportXlsx(){
+  if(typeof XLSX==='undefined'){ exportCsv(); return; }
+  const wb=XLSX.utils.book_new();
+  YEARS.forEach(y=>{const ws=XLSX.utils.aoa_to_sheet(buildAOA(y));
+    ws['!cols']=[{wch:38},{wch:40},{wch:11},{wch:12},{wch:12},{wch:12},{wch:12},{wch:11},{wch:12},{wch:10},{wch:11},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,ws,String(y));});
+  const rem=[['Properties Removed From This Project'],[],['Property','Address','Reason Removed'],
+    ...DATA.removed.map(r=>[r.name,r.address,r.reason])];
+  const wsr=XLSX.utils.aoa_to_sheet(rem); wsr['!cols']=[{wch:42},{wch:40},{wch:90}];
+  XLSX.utils.book_append_sheet(wb,wsr,'Removed Properties');
+  XLSX.writeFile(wb,'CAM_Taxes_Insurance_Tracker_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+function exportCsv(){
+  const lines=[];
+  YEARS.forEach(y=>{ lines.push('# '+y); buildAOA(y).forEach(r=>lines.push(r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(','))); lines.push(''); });
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='CAM_Taxes_Insurance_Tracker.csv'; a.click();
+}
+
+// ---------- Events ----------
+function renderAll(){ renderKpis(); renderTable(); renderChart(); renderTrend(); }
+$('#yearSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  state.year=+b.dataset.year; $('#yearSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); renderAll();});
+$('#metricSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  state.metric=b.dataset.metric; $('#metricSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); renderTable(); renderChart();});
+$('#sortSel').addEventListener('change',e=>{state.sort=e.target.value; state.dir = e.target.value==='name'?1:-1; renderTable(); });
+$('#search').addEventListener('input',e=>{state.search=e.target.value; renderTable(); renderChart();});
+$('#flagChk').addEventListener('change',e=>{state.flaggedOnly=e.target.checked; renderTable(); renderChart();});
+$('#thead').addEventListener('click',e=>{const th=e.target.closest('th[data-sort]');if(!th)return;
+  const k=th.dataset.sort; if(state.sort===k){state.dir*=-1;} else {state.sort=k; state.dir = k==='name'?1:-1;}
+  $('#sortSel').value=(['name','sf','taxes','insurance','cam','total','yoy'].includes(k))?k:'total'; renderTable();});
+document.addEventListener('click',e=>{
+  const openEl=e.target.closest('[data-open]');
+  if(openEl && !state.edit){ openDetail(openEl.dataset.open); }
+});
+$('#overlay').addEventListener('click',e=>{ if(e.target===$('#overlay')) closeDetail(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDetail(); });
+$('#editBtn').addEventListener('click',()=>{
+  state.edit=!state.edit;
+  $('#editBtn').classList.toggle('on',state.edit);
+  $('#editBtn').innerHTML = state.edit?'✓ Done editing':'✏️ Edit';
+  $('#editBanner').classList.toggle('show',state.edit);
+  renderTable();
+});
+$('#xlsxBtn').addEventListener('click',exportXlsx);
+$('#infoTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  state.tab=b.dataset.tab; $('#infoTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#removedPane').style.display = state.tab==='removed'?'block':'none';
+  $('#methodPane').style.display = state.tab==='method'?'block':'none';});
+
+$('#footer').textContent = `Triangle Investments · CAM, Taxes & Insurance Tracker · ${P.length} properties · 2024–2025 · figures from Yardi 5000 (reimbursable) accounts`;
+
+renderRemoved();
+renderAll();
+</script>
+</body>
+</html>
