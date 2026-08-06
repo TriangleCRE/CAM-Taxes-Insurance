@@ -103,6 +103,13 @@
   .flagbadge{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;letter-spacing:.2px}
   .fb-amber{background:var(--amber-bg);color:var(--amber)}
   .fb-blue{background:var(--blue-bg);color:var(--blue)}
+
+  /* Year comparison */
+  .cmp-yearpick{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:600}
+  .cmp-yearpick select{padding:6px 10px;font-size:12.5px}
+  .dchg{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:3px;font-size:11px;color:var(--muted)}
+  #comparePanel .flagcallout{margin-bottom:10px}
+  #comparePanel .flagcallout:last-child{margin-bottom:0}
   tfoot td{padding:11px 12px;font-weight:700;color:var(--charcoal);border-top:2px solid var(--line);background:#FAFBFC;text-align:right}
   tfoot td:first-child{text-align:left}
   .edit-input{width:92px;text-align:right;border:1px solid var(--green);border-radius:6px;padding:5px 7px;font-size:13px;
@@ -253,9 +260,29 @@
     </select>
     <label class="toggle-lab"><input type="checkbox" id="flagChk"> Flagged only</label>
     <div class="push">
+      <button class="btn ghost" id="compareBtn">⇄ Compare years</button>
       <button class="btn ghost" id="addBtn" style="display:none">＋ Add property</button>
       <button class="btn ghost" id="editBtn">✏️ Edit</button>
       <button class="btn primary" id="xlsxBtn">⬇ Export to Excel</button>
+    </div>
+  </div>
+
+  <div class="panel" id="comparePanel" style="display:none;margin-bottom:18px">
+    <div class="ph">
+      <h2>Year-over-year comparison</h2>
+      <div class="cmp-yearpick">
+        <select id="cmpFromYear"></select>
+        <span>→</span>
+        <select id="cmpToYear"></select>
+      </div>
+    </div>
+    <div id="cmpFlags" style="padding:14px 18px 4px"></div>
+    <div class="tablewrap">
+      <table class="data" id="cmpTbl">
+        <thead id="cmpThead"></thead>
+        <tbody id="cmpTbody"></tbody>
+        <tfoot id="cmpTfoot"></tfoot>
+      </table>
     </div>
   </div>
 
@@ -323,7 +350,8 @@ let P = [];
 let REMOVED = [];
 const YEARS = [2024,2025];
 
-const state = { year:2025, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed' };
+const state = { year:2025, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed',
+  cmpOpen:false, cmpFrom:YEARS[YEARS.length-2]??YEARS[0], cmpTo:YEARS[YEARS.length-1], cmpSort:'total', cmpDir:-1 };
 
 // ---------- Auth ----------
 function showApp(){
@@ -419,6 +447,48 @@ function metricVal(p,y,key){ // key in taxes/insurance/cam/total
 function fmtMetric(v){ return state.metric==='persf' ? psf(v) : usd(v); }
 function flagsOf(p){ const f=(p.flags||'').toLowerCase(); return {multi:f.includes('multi'), review:f.includes('review')}; }
 function yoyPct(p){ const a=total(p,2024), b=total(p,2025); if(!a) return null; return (b-a)/a; }
+
+// ---------- Year comparison ----------
+function pctOf(prev,cur){ if(!prev) return cur?null:0; return (cur-prev)/prev; }
+// Flags anything crossing a materiality threshold so real anomalies surface, not noise from tiny line items.
+function compareSeverity(prev,cur){
+  const p=+prev||0, c=+cur||0, diff=c-p;
+  if(p===0 && c===0) return null;
+  if(p===0 && c>0) return {level: c>=5000?'concern':'notable', kind:'new', pct:null, diff};
+  if(p>0 && c===0) return {level:'concern', kind:'zeroed', pct:-1, diff};
+  const pct=diff/p, absPct=Math.abs(pct), absDiff=Math.abs(diff);
+  if(absPct>=0.5 && absDiff>=1000) return {level:'concern', kind:pct>0?'up':'down', pct, diff};
+  if(absPct>=0.2 && absDiff>=400) return {level:'notable', kind:pct>0?'up':'down', pct, diff};
+  return null;
+}
+function cmpRows(){
+  const fy=state.cmpFrom, ty=state.cmpTo;
+  return P.map(p=>{
+    const rf=rec(p,fy), rt=rec(p,ty);
+    const cats={};
+    ['taxes','insurance','cam'].forEach(k=>{
+      const prev=+rf[k]||0, cur=+rt[k]||0;
+      cats[k]={prev,cur,diff:cur-prev,pct:pctOf(prev,cur),sev:compareSeverity(prev,cur)};
+    });
+    const prevT=total(p,fy), curT=total(p,ty);
+    cats.total={prev:prevT,cur:curT,diff:curT-prevT,pct:pctOf(prevT,curT),sev:compareSeverity(prevT,curT)};
+    return {p,cats};
+  });
+}
+function sortedCmpRows(){
+  const rows=cmpRows(), dir=state.cmpDir;
+  rows.sort((a,b)=>{
+    let va,vb;
+    switch(state.cmpSort){
+      case 'name': return dir*a.p.name.localeCompare(b.p.name);
+      case 'sf': va=+a.p.sf||0; vb=+b.p.sf||0; break;
+      case 'taxes': case 'insurance': case 'cam': va=a.cats[state.cmpSort].diff; vb=b.cats[state.cmpSort].diff; break;
+      default: va=a.cats.total.diff; vb=b.cats.total.diff;
+    }
+    return dir*(va-vb);
+  });
+  return rows;
+}
 
 // ---------- KPI ----------
 function renderKpis(){
@@ -584,6 +654,93 @@ function renderTrend(){
     </div>`;
 }
 
+// ---------- Year comparison rendering ----------
+function renderCompareYearOptions(){
+  const opts=YEARS.map(y=>`<option value="${y}">${y}</option>`).join('');
+  $('#cmpFromYear').innerHTML=opts; $('#cmpToYear').innerHTML=opts;
+  $('#cmpFromYear').value=state.cmpFrom; $('#cmpToYear').value=state.cmpTo;
+}
+function renderCompareFlags(rows){
+  const CATS=[['taxes','Taxes'],['insurance','Insurance'],['cam','CAM']];
+  let items=[];
+  rows.forEach(r=>CATS.forEach(([k,lab])=>{ const c=r.cats[k]; if(c.sev) items.push({p:r.p,key:k,lab,...c}); }));
+  items.sort((a,b)=>{
+    const order={concern:2,notable:1}; const sa=order[a.sev.level]||0, sb=order[b.sev.level]||0;
+    if(sb!==sa) return sb-sa;
+    return Math.abs(b.diff)-Math.abs(a.diff);
+  });
+  const concernCount=items.filter(i=>i.sev.level==='concern').length;
+  const notableCount=items.filter(i=>i.sev.level==='notable').length;
+  if(state.cmpFrom===state.cmpTo){
+    $('#cmpFlags').innerHTML=`<div class="flagcallout blue"><div class="ftt">◆ Pick two different years</div><div class="cmt">Select a "from" and "to" year above to compare.</div></div>`;
+    return;
+  }
+  if(!items.length){
+    $('#cmpFlags').innerHTML=`<div class="flagcallout blue"><div class="ftt">✓ No notable swings</div><div class="cmt">No property crossed the notability thresholds between ${state.cmpFrom} and ${state.cmpTo}.</div></div>`;
+    return;
+  }
+  const desc=(i)=>{
+    if(i.sev.kind==='zeroed') return `dropped to $0 in ${state.cmpTo} (was ${usd(i.prev)} in ${state.cmpFrom}) — confirm this isn't a data gap or missed billback rather than a real reduction.`;
+    if(i.sev.kind==='new') return `newly appeared in ${state.cmpTo} at ${usd(i.cur)} (was $0 in ${state.cmpFrom}).`;
+    return `${i.diff>0?'up':'down'} ${Math.abs(i.pct*100).toFixed(0)}% (${usd(i.prev)} → ${usd(i.cur)}).`;
+  };
+  const top=items.slice(0,10);
+  $('#cmpFlags').innerHTML =
+    `<div class="flagcallout ${concernCount?'amber':'blue'}">
+      <div class="ftt">${concernCount?'⚠':'◆'} ${concernCount} concerning · ${notableCount} notable change${notableCount===1?'':'s'} between ${state.cmpFrom} and ${state.cmpTo}</div>
+      <div class="cmt">Ranked by size of swing below${items.length>top.length?` (top ${top.length} of ${items.length})`:''}. Also flagged inline in the table.</div>
+    </div>` +
+    top.map(i=>`<div class="flagcallout ${i.sev.level==='concern'?'amber':'blue'}">
+        <div class="ftt">${i.sev.level==='concern'?'⚠':'◆'} ${i.p.name} — ${i.lab}</div>
+        <div class="cmt">${desc(i)}</div>
+      </div>`).join('');
+}
+function renderCompareTable(){
+  const rows=sortedCmpRows();
+  const cols=[{k:'name',lab:'Property'},{k:'sf',lab:'Sq Ft'},{k:'taxes',lab:'Taxes'},{k:'insurance',lab:'Insurance'},{k:'cam',lab:'CAM'},{k:'total',lab:'Total'}];
+  $('#cmpThead').innerHTML='<tr>'+cols.map(c=>{
+    const sorted=state.cmpSort===c.k || (c.k==='total'&&state.cmpSort==='total');
+    const ar=sorted?(state.cmpDir<0?'▼':'▲'):'▲';
+    return `<th data-cmpsort="${c.k}" class="${sorted?'sorted':''}">${c.lab}<span class="ar">${ar}</span></th>`;
+  }).join('')+'</tr>';
+  if(!rows.length){ $('#cmpTbody').innerHTML=`<tr><td colspan="6"><div class="empty">No properties to compare.</div></td></tr>`; $('#cmpTfoot').innerHTML=''; return; }
+  const cell=(c)=>{
+    const up=c.diff>0, dn=c.diff<0, cls=up?'up':dn?'down':'flat', ar=up?'▲':dn?'▼':'—';
+    const pctTxt = c.pct===null ? (c.cur?'new':'—') : `${Math.abs(c.pct*100).toFixed(0)}%`;
+    const badge = c.sev ? `<span class="flagbadge ${c.sev.level==='concern'?'fb-amber':'fb-blue'}" title="${c.sev.kind}">${c.sev.level==='concern'?'⚠':'◆'}</span>` : '';
+    return `<div class="tnum" style="font-weight:600">${usd(c.cur)}</div><div class="dchg"><span class="chip ${cls}">${ar} ${pctTxt}</span>${badge}</div>`;
+  };
+  $('#cmpTbody').innerHTML = rows.map(r=>{
+    const f=flagsOf(r.p); let badges='';
+    if(f.multi) badges+=`<span class="flagbadge fb-blue">▦</span> `;
+    if(f.review) badges+=`<span class="flagbadge fb-amber">⚑</span>`;
+    return `<tr data-open="${r.p.id}">
+      <td><div class="pname">${r.p.name}</div><div class="paddr">${r.p.address||''} ${badges}</div></td>
+      <td class="tnum">${(+r.p.sf||0).toLocaleString()}</td>
+      <td class="tax">${cell(r.cats.taxes)}</td>
+      <td class="ins">${cell(r.cats.insurance)}</td>
+      <td class="cam">${cell(r.cats.cam)}</td>
+      <td>${cell(r.cats.total)}</td>
+    </tr>`;
+  }).join('');
+  const sums={taxes:{prev:0,cur:0},insurance:{prev:0,cur:0},cam:{prev:0,cur:0},total:{prev:0,cur:0}};
+  rows.forEach(r=>['taxes','insurance','cam','total'].forEach(k=>{ sums[k].prev+=r.cats[k].prev; sums[k].cur+=r.cats[k].cur; }));
+  const footCell=(s)=>{
+    const diff=s.cur-s.prev, pct=pctOf(s.prev,s.cur), up=diff>0, dn=diff<0, cls=up?'up':dn?'down':'flat', ar=up?'▲':dn?'▼':'—';
+    const pctTxt = pct===null?(s.cur?'new':'—'):`${Math.abs(pct*100).toFixed(1)}%`;
+    return `<div class="tnum">${usd(s.cur)}</div><div class="dchg">${usd(s.prev)} <span class="chip ${cls}">${ar} ${pctTxt}</span></div>`;
+  };
+  $('#cmpTfoot').innerHTML = `<tr>
+    <td>Portfolio total · ${rows.length} ${rows.length===1?'property':'properties'}</td><td></td>
+    <td>${footCell(sums.taxes)}</td><td>${footCell(sums.insurance)}</td><td>${footCell(sums.cam)}</td><td>${footCell(sums.total)}</td>
+  </tr>`;
+}
+function renderCompare(){
+  if(!state.cmpOpen) return;
+  renderCompareFlags(cmpRows());
+  renderCompareTable();
+}
+
 // ---------- Removed + method ----------
 function renderRemoved(){
   $('#removedCount').textContent = `(${REMOVED.length})`;
@@ -688,7 +845,7 @@ function bindEdit(){
       if(!p) return;
       let v=parseFloat(inp.value.replace(/[^0-9.\-]/g,'')); if(isNaN(v)) v=0;
       if(key==='sf'){ p.sf=v; } else { p.data[state.year][key]=v; }
-      renderKpis(); renderChart(); renderTrend();
+      renderKpis(); renderChart(); renderTrend(); renderCompare();
       // update just totals/footer without losing focus target: re-render table
       const active=document.activeElement;
       renderTableKeepFocus(active);
@@ -834,7 +991,7 @@ function exportCsv(){
 
 // ---------- Events ----------
 function renderAll(){
-  renderKpis(); renderTable(); renderChart(); renderTrend();
+  renderKpis(); renderTable(); renderChart(); renderTrend(); renderCompare();
   $('#footer').textContent = `Triangle Investments · CAM, Taxes & Insurance Tracker · ${P.length} properties · 2024–2025 · figures from Yardi 5000 (reimbursable) accounts`;
 }
 $('#yearSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
@@ -874,6 +1031,21 @@ $('#editBtn').addEventListener('click',()=>{
   renderTable();
   renderRemoved();
 });
+$('#compareBtn').addEventListener('click',()=>{
+  state.cmpOpen=!state.cmpOpen;
+  $('#compareBtn').classList.toggle('on',state.cmpOpen);
+  $('#comparePanel').style.display = state.cmpOpen?'':'none';
+  if(state.cmpOpen) renderCompare();
+});
+$('#cmpFromYear').addEventListener('change',e=>{ state.cmpFrom=+e.target.value; renderCompare(); });
+$('#cmpToYear').addEventListener('change',e=>{ state.cmpTo=+e.target.value; renderCompare(); });
+$('#cmpThead').addEventListener('click',e=>{
+  const th=e.target.closest('th[data-cmpsort]'); if(!th) return;
+  const k=th.dataset.cmpsort;
+  if(state.cmpSort===k){ state.cmpDir*=-1; } else { state.cmpSort=k; state.cmpDir = k==='name'?1:-1; }
+  renderCompareTable();
+});
+renderCompareYearOptions();
 $('#addBtn').addEventListener('click',openAddPropertyModal);
 $('#addRemovedBtn').addEventListener('click',openAddRemovedModal);
 $('#xlsxBtn').addEventListener('click',exportXlsx);
