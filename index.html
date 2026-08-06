@@ -130,6 +130,28 @@
     transition:opacity .12s ease,transform .12s ease;z-index:60}
   .tip .tipbox::after{content:"";position:absolute;top:100%;right:12px;border:5px solid transparent;border-top-color:var(--charcoal)}
   .tip:hover .tipbox,.tip:focus .tipbox,.tip:focus-within .tipbox{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}
+
+  /* Compare — chart view: small-multiples of before/after bars, one card per property */
+  .cmpchart-wrap{padding:16px 18px 18px}
+  .cmpchart-legend{display:flex;flex-wrap:wrap;align-items:center;gap:16px;font-size:12px;color:var(--muted);margin-bottom:16px}
+  .cmpchart-legend .lg{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+  .cmpchart-legend .sw{width:11px;height:11px;border-radius:3px;flex:none}
+  .cmpchart-legend .sw.shade-prev{opacity:.4}
+  .cmpchart-legend .sep{width:1px;height:14px;background:var(--line);flex:none}
+  .cmpchart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .cmpb-card{border:1px solid var(--line);border-radius:12px;padding:13px 15px 8px;background:var(--card);cursor:pointer;transition:border-color .12s}
+  .cmpb-card:hover{border-color:var(--faint)}
+  .cmpb-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .cmpb-name{font-weight:650;font-size:13px;color:var(--charcoal)}
+  .cmpb-row{display:grid;grid-template-columns:60px 1fr 56px 20px;align-items:center;gap:8px;padding:5px 0}
+  .cmpb-lab{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+  .cmpb-bars{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+  .cmpb-track{background:var(--line-2);border-radius:4px;height:7px;overflow:hidden}
+  .cmpb-bar{height:100%;border-radius:0 4px 4px 0;min-width:2px}
+  .cmpb-bar.prev{opacity:.4}
+  .cmpb-chip{font-size:10.5px;text-align:right;white-space:nowrap}
+  .cmpb-row.grp-total{border-top:1px solid var(--line-2);margin-top:2px;padding-top:9px}
+  .cmpb-row.grp-total .cmpb-lab{color:var(--charcoal);font-weight:700}
   tfoot td{padding:11px 12px;font-weight:700;color:var(--charcoal);border-top:2px solid var(--line);background:#FAFBFC;text-align:right}
   tfoot td:first-child{text-align:left}
   .edit-input{width:92px;text-align:right;border:1px solid var(--green);border-radius:6px;padding:5px 7px;font-size:13px;
@@ -295,6 +317,10 @@
     <div class="ph">
       <h2>Year-over-year comparison</h2>
       <div class="cmp-controls">
+        <div class="seg" id="cmpViewSeg" title="Table for exact values and editing, chart for a quick visual scan">
+          <button data-view="table" class="on">Table</button>
+          <button data-view="chart">Chart</button>
+        </div>
         <div class="cmp-yearpick">
           <select id="cmpFromYear"></select>
           <span>→</span>
@@ -311,13 +337,14 @@
       </div>
     </div>
     <div id="cmpSummary" class="cmp-summary"></div>
-    <div class="tablewrap">
+    <div class="tablewrap" id="cmpTableWrap">
       <table class="data" id="cmpTbl">
         <thead id="cmpThead"></thead>
         <tbody id="cmpTbody"></tbody>
         <tfoot id="cmpTfoot"></tfoot>
       </table>
     </div>
+    <div id="cmpChart" class="cmpchart-wrap" style="display:none"></div>
   </div>
 
   <div class="grid">
@@ -385,7 +412,7 @@ let REMOVED = [];
 const YEARS = [2024,2025];
 
 const state = { year:2025, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed',
-  cmpOpen:false, cmpFrom:YEARS[YEARS.length-2]??YEARS[0], cmpTo:YEARS[YEARS.length-1], cmpSort:'total', cmpDir:-1 };
+  cmpOpen:false, cmpFrom:YEARS[YEARS.length-2]??YEARS[0], cmpTo:YEARS[YEARS.length-1], cmpSort:'total', cmpDir:-1, cmpView:'table' };
 
 // ---------- Auth ----------
 function showApp(){
@@ -779,10 +806,58 @@ function renderCompareTable(){
   }).join('');
   bindEditInputs('#cmpTbody');
 }
+
+// ---------- Compare — chart view ----------
+// "Before → after per item" — one hue per category, two shades per item (light = From
+// year, solid = To year), scaled per-category so bars stay comparable property-to-property.
+const CMP_COLOR = {taxes:'var(--tax)', insurance:'var(--ins)', cam:'var(--cam)', total:'var(--charcoal)'};
+function cmpCategoryMaxes(rows){
+  const maxes={};
+  CMP_CATS.forEach(([k])=>{ maxes[k]=Math.max(1,...rows.flatMap(r=>[r.cats[k].prev,r.cats[k].cur])); });
+  return maxes;
+}
+function cmpChartRow(key,label,c,max){
+  const color=CMP_COLOR[key];
+  const prevPct=Math.min(100, c.prev/max*100);
+  const curPct=Math.min(100, c.cur/max*100);
+  const up=c.diff>0, dn=c.diff<0, cls=up?'up':dn?'down':'flat', ar=up?'▲':dn?'▼':'—';
+  const pctTxt = c.pct===null ? (c.cur?'new':'—') : `${Math.abs(c.pct*100).toFixed(0)}%`;
+  const tipMsg = `${state.cmpFrom}: ${usd(c.prev)} · ${state.cmpTo}: ${usd(c.cur)} · ${ar} ${pctTxt}`;
+  return `<div class="cmpb-row${key==='total'?' grp-total':''}">
+    <div class="cmpb-lab">${label}</div>
+    <div class="cmpb-bars tip" tabindex="0" aria-label="${label} ${tipMsg.replace(/"/g,'&quot;')}">
+      <div class="cmpb-track"><div class="cmpb-bar prev" style="width:${prevPct}%;background:${color}"></div></div>
+      <div class="cmpb-track"><div class="cmpb-bar cur" style="width:${curPct}%;background:${color}"></div></div>
+      <span class="tipbox">${tipMsg}</span>
+    </div>
+    <div class="cmpb-chip"><span class="chip ${cls}">${ar} ${pctTxt}</span></div>
+    <div>${flagIcon(c,label)}</div>
+  </div>`;
+}
+function renderCompareChart(){
+  const rows=sortedCmpRows();
+  if(!rows.length){ $('#cmpChart').innerHTML=`<div class="empty">No properties to compare.</div>`; return; }
+  const maxes=cmpCategoryMaxes(rows);
+  const legend = `<div class="cmpchart-legend">
+    <span class="lg"><span class="sw" style="background:var(--tax)"></span>Taxes</span>
+    <span class="lg"><span class="sw" style="background:var(--ins)"></span>Insurance</span>
+    <span class="lg"><span class="sw" style="background:var(--cam)"></span>CAM</span>
+    <span class="lg"><span class="sw" style="background:var(--charcoal)"></span>Total</span>
+    <span class="sep"></span>
+    <span class="lg"><span class="sw shade-prev" style="background:var(--charcoal)"></span>${state.cmpFrom}</span>
+    <span class="lg"><span class="sw" style="background:var(--charcoal)"></span>${state.cmpTo}</span>
+  </div>`;
+  const cards = rows.map(r=>`<div class="cmpb-card" data-open="${r.p.id}">
+      <div class="cmpb-head"><span class="cmpb-name">${r.p.name}</span>${propBadgesHtml(r.p)}</div>
+      ${CMP_CATS.map(([key,label])=>cmpChartRow(key,label,r.cats[key],maxes[key])).join('')}
+    </div>`).join('');
+  $('#cmpChart').innerHTML = legend + `<div class="cmpchart-grid">${cards}</div>`;
+}
 function renderCompare(){
   if(!state.cmpOpen) return;
   renderCompareSummary(cmpRows());
   renderCompareTable();
+  renderCompareChart();
 }
 
 // ---------- Removed + method ----------
@@ -1106,7 +1181,15 @@ $('#compareBtn').addEventListener('click',()=>{
 $('#cmpFromYear').addEventListener('change',e=>{ state.cmpFrom=+e.target.value; renderCompare(); });
 $('#cmpToYear').addEventListener('change',e=>{ state.cmpTo=+e.target.value; renderCompare(); });
 $('#cmpSortSel').addEventListener('change',e=>{
-  state.cmpSort=e.target.value; state.cmpDir = e.target.value==='name'?1:-1; renderCompareTable();
+  state.cmpSort=e.target.value; state.cmpDir = e.target.value==='name'?1:-1;
+  renderCompareTable(); renderCompareChart();
+});
+$('#cmpViewSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  state.cmpView=b.dataset.view;
+  $('#cmpViewSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#cmpTableWrap').style.display = state.cmpView==='table'?'':'none';
+  $('#cmpChart').style.display = state.cmpView==='chart'?'':'none';
 });
 renderCompareYearOptions();
 $('#addBtn').addEventListener('click',openAddPropertyModal);
