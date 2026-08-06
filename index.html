@@ -317,9 +317,9 @@
     <div class="ph">
       <h2>Year-over-year comparison</h2>
       <div class="cmp-controls">
-        <div class="seg" id="cmpViewSeg" title="Table for exact values and editing, chart for a quick visual scan">
-          <button data-view="table" class="on">Table</button>
-          <button data-view="chart">Chart</button>
+        <div class="seg" id="cmpViewSeg" title="Chart for a quick visual scan, table for exact values and editing">
+          <button data-view="chart" class="on">Chart</button>
+          <button data-view="table">Table</button>
         </div>
         <div class="cmp-yearpick">
           <select id="cmpFromYear"></select>
@@ -337,17 +337,17 @@
       </div>
     </div>
     <div id="cmpSummary" class="cmp-summary"></div>
-    <div class="tablewrap" id="cmpTableWrap">
+    <div class="tablewrap" id="cmpTableWrap" style="display:none">
       <table class="data" id="cmpTbl">
         <thead id="cmpThead"></thead>
         <tbody id="cmpTbody"></tbody>
         <tfoot id="cmpTfoot"></tfoot>
       </table>
     </div>
-    <div id="cmpChart" class="cmpchart-wrap" style="display:none"></div>
+    <div id="cmpChart" class="cmpchart-wrap"></div>
   </div>
 
-  <div class="grid">
+  <div class="grid" id="mainGrid">
     <div class="panel">
       <div class="ph">
         <h2>Properties <span class="note" id="tblCount"></span></h2>
@@ -412,7 +412,7 @@ let REMOVED = [];
 const YEARS = [2024,2025];
 
 const state = { year:2025, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed',
-  cmpOpen:false, cmpFrom:YEARS[YEARS.length-2]??YEARS[0], cmpTo:YEARS[YEARS.length-1], cmpSort:'total', cmpDir:-1, cmpView:'table' };
+  cmpOpen:false, cmpFrom:YEARS[YEARS.length-2]??YEARS[0], cmpTo:YEARS[YEARS.length-1], cmpSort:'total', cmpDir:-1, cmpView:'chart' };
 
 // ---------- Auth ----------
 function showApp(){
@@ -1176,6 +1176,9 @@ $('#compareBtn').addEventListener('click',()=>{
   state.cmpOpen=!state.cmpOpen;
   $('#compareBtn').classList.toggle('on',state.cmpOpen);
   $('#comparePanel').style.display = state.cmpOpen?'':'none';
+  // The Properties table + Cost-by-property chart below just repeat the current
+  // year's numbers the comparison panel already shows — hide them while comparing.
+  $('#mainGrid').style.display = state.cmpOpen?'none':'';
   if(state.cmpOpen) renderCompare();
 });
 $('#cmpFromYear').addEventListener('change',e=>{ state.cmpFrom=+e.target.value; renderCompare(); });
