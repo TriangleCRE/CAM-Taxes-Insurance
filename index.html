@@ -714,8 +714,11 @@ function renderTable(){
     const bar=`<div class="microbar" title="Taxes ${usd(r.taxes)} · Ins ${usd(r.insurance)} · CAM ${usd(r.cam)}">`+
       parts.map(pt=>`<span style="width:${(pt.v/denom*100)}%;background:${CAT[pt.k].c}"></span>`).join('')+`</div>`;
     const delBtn = state.edit ? `<button class="xbtn" data-del="${p.id}" title="Delete property" style="width:22px;height:22px;font-size:12px;margin-left:8px">✕</button>` : '';
+    // Address intentionally omitted here (only shown in the detail modal) so
+    // this column has room to breathe for flags/edit-mode toggles instead.
+    const badgesRow = badges? `<div class="paddr">${badges}</div>` : '';
     return `<tr class="${state.edit?'editrow':''}" data-open="${p.id}">
-      <td><div class="pname">${p.name}${delBtn}</div><div class="paddr">${p.address||''} ${badges}</div></td>
+      <td><div class="pname">${p.name}${delBtn}</div>${badgesRow}</td>
       <td>${sfCell}</td>
       <td class="tax">${cell('taxes')}</td>
       <td class="ins">${cell('insurance')}</td>
