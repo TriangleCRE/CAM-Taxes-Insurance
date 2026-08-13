@@ -213,6 +213,10 @@
   .flagcallout.amber .ftt{color:var(--amber)} .flagcallout.blue .ftt{color:var(--blue)}
   .flagcallout .cmt{color:var(--ink);margin-top:6px}
   .flagcallout .cmt b{color:var(--charcoal)}
+  .resolve-note{margin-left:auto;border:0;background:transparent;font-size:11px;font-weight:700;
+    letter-spacing:.2px;cursor:pointer;padding:2px 6px;border-radius:6px;opacity:.75;text-transform:none}
+  .flagcallout.amber .resolve-note{color:var(--amber)} .flagcallout.blue .resolve-note{color:var(--blue)}
+  .resolve-note:hover{opacity:1;background:rgba(0,0,0,.06)}
 
   /* Yardi Pull Prompt modal */
   .yp-modal{max-width:820px}
@@ -1002,7 +1006,9 @@ function openDetail(id){
     Object.entries(cm).forEach(([field,txt])=>{
       const isBlue=/multi|parcel|address/i.test(txt);
       callouts+=`<div class="flagcallout ${isBlue?'blue':'amber'}">
-        <div class="ftt">${isBlue?'▦':'⚑'} ${commentFieldLabel(field)} · ${y}</div>
+        <div class="ftt">${isBlue?'▦':'⚑'} ${commentFieldLabel(field)} · ${y}
+          <button class="resolve-note" type="button" data-id="${p.id}" data-year="${y}" data-field="${field.replace(/"/g,'&quot;')}" title="Remove this note — marks it resolved">✓ Resolve</button>
+        </div>
         <div class="cmt">${txt}</div></div>`;
     });
   });
@@ -1035,8 +1041,26 @@ function openDetail(id){
     </div>`;
   $('#overlay').classList.add('show');
   $('#closeX').onclick=closeDetail;
+  document.querySelectorAll('.resolve-note').forEach(btn=>{
+    btn.addEventListener('click',()=>resolveNote(btn));
+  });
 }
 function closeDetail(){ $('#overlay').classList.remove('show'); }
+// Removes one field's comment for one year — the per-note counterpart to the
+// property-level Multi/Review flag checkboxes in Edit mode. Comments (unlike
+// flags) carry no "resolved" state of their own, so resolving just deletes
+// the note; there's no way to bring it back short of re-importing the pull.
+async function resolveNote(btn){
+  const id=+btn.dataset.id, year=btn.dataset.year, field=btn.dataset.field;
+  const p=P.find(x=>x.id===id); if(!p) return;
+  const yr=p.data && p.data[year];
+  if(!yr || !yr.comments || !(field in yr.comments)) return;
+  if(!confirm('Mark this resolved and remove the note? This can\'t be undone.')) return;
+  delete yr.comments[field];
+  btn.closest('.flagcallout').remove();
+  try{ await saveProperty(p); }
+  catch(err){ console.error('Failed to resolve note', err); showActionError('Failed to save — the note may reappear after a refresh. Please retry.'); }
+}
 
 // ---------- Edit ----------
 // Shared by the Properties table and the Compare table: both render .edit-input
