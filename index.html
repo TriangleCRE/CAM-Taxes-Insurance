@@ -219,7 +219,6 @@
   .yp-note b{color:var(--charcoal)}
   .yp-note ul{margin:8px 0;padding-left:20px}
   .yp-note li{margin:3px 0}
-  .yp-note code{background:#fff;border:1px solid #F0DCB0;border-radius:4px;padding:1px 5px;font-size:12px}
   .yp-yearsrow{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px}
   .yp-yearlist{display:flex;flex-wrap:wrap;gap:8px}
   .yp-chip{display:inline-flex;align-items:center;gap:7px;background:var(--green-l);color:var(--green-d);
@@ -1145,12 +1144,15 @@ function openYardiPullModal(){
     </div>
     <div class="mbody yp-modal">
       <div class="yp-note">
-        <b>Before you paste this in:</b> that Claude session can only see what you give it access to.
+        <b>Before you paste this in:</b>
         <ul>
-          <li>Make sure that session's browser is already logged into Yardi Breeze — the prompt links directly to <code>100115409.breeze.cafe</code>.</li>
-          <li>Optionally attach an export of this dashboard (<b>Export to Excel</b>, top toolbar) so it can cross-check property names, addresses and square footage against what's already tracked here.</li>
+          <li>Open the saved <b>"CAM/Tax/Ins Annual Pull"</b> packet in Yardi Breeze, set the year(s) you want, run it, and <b>download</b> it.</li>
+          <li>Attach the downloaded packet to the Claude session along with this prompt. This session no longer needs to be logged into Yardi — it reads the file, it doesn't navigate the site.</li>
+          <li>Optionally also attach an <b>Export to Excel</b> of this dashboard (top toolbar) so the session can cross-check property names, addresses, and square footage against what's already tracked here.</li>
         </ul>
-        If any properties were acquired, sold, or renamed since the last pull, say so in the same message — that session can only work from what Yardi currently shows plus whatever you tell it.
+        If any properties were acquired, sold, or renamed since the last pull, say so in the same message.
+        <br><br>
+        Bring the session's JSON reply back here, then hand it to the Claude Code chat connected to this repo.
       </div>
 
       <div class="yp-yearsrow">
@@ -1207,30 +1209,26 @@ function buildYardiPrompt(years){
     ]
   };
   years.slice(1).forEach(y=>{ example[y] = `... same shape as ${exYear}, one entry per property`; });
-  return `I need you to pull CAM, Taxes, and Insurance data from Yardi Breeze for Triangle Investments (TPA LLC) for the following year(s): ${yearList}.
+  return `I'm giving you a Yardi Breeze report packet (attached) for Triangle Investments (TPA LLC) covering the following year(s): ${yearList}. It contains an Annual Statement (Book = Cash) and a Property Directory, both scoped to my 14-property "cam.tax" list. Extract the reimbursable-expense data and return it as JSON for my dashboard.
 
-STEP 1 — Confirm access
-Before doing anything else, confirm that you (this Claude session) currently have working, logged-in access to Yardi Breeze in this browser at:
-https://100115409.breeze.cafe/content/#/app/dashboard
-If you are not logged in or can't reach that URL, stop here and tell me — do not guess or fabricate numbers.
+STEP 1 — Confirm the packet
+Confirm you can read the attached packet and that it covers the year(s) above. If a year, a property, or either report is missing, stop and tell me — do not guess or fabricate numbers.
 
 STEP 2 — Confirm the property list
-Open the Property Directory report in Yardi Breeze and pull the current list of active properties, including each property's name/code, address, and square footage. If I attached an export of the CAM/Taxes/Insurance dashboard, cross-check this list against it and flag any mismatches (new properties, sold/removed properties, renamed properties, changed square footage).
+From the Property Directory, list each property's name/code, address, and square footage. If I also attached an export of the CAM/Taxes/Insurance dashboard, cross-check against it and flag mismatches (new, sold/removed, renamed, changed SF).
 
 STEP 3 — Pull the financial data
-For each active property, and for each year listed below, run the Annual Statement report with Book = Cash for the full calendar year:
-${years.map(y=>`  - ${y}`).join('\n')}
-From each Annual Statement, pull the full-year cash-basis totals for the three reimbursable expense categories (Yardi 5000-series reimbursable accounts):
-  - Real estate Taxes
-  - Insurance
-  - CAM (Common Area Maintenance)
-Use the full-year total for each category, not a monthly or accrual figure.
+For each property and each year, read the full-year (calendar-year) cash-basis totals from the Annual Statement for the Yardi 5000-series reimbursable accounts, rolled into three categories:
+  - Taxes — accounts: [FILL IN, e.g. 5100]
+  - Insurance — accounts: [FILL IN, e.g. 5200]
+  - CAM — accounts: [FILL IN, e.g. 5300–5900]
+Use the full-year total column, not monthly or accrual figures. If the packet already subtotals these three categories, use those subtotals.
 
 STEP 4 — Flag anything unusual
-Note anything worth a human double-checking: a property spanning multiple parcels/addresses, a category missing or $0 for the full year, a large swing vs. the prior year, a property acquired or sold mid-year, etc. Use "multi" for multi-parcel/address situations and "review" for anything else that needs a second look (combine as "multi, review" if both apply).
+Flag anything a human should re-check: a property spanning multiple parcels/addresses ("multi"), a category missing or $0 for the full year ("review"), a large swing vs. the prior year, a property acquired or sold mid-year. Combine as "multi, review" when both apply.
 
 STEP 5 — Reply in this exact format
-Reply with ONLY a single fenced JSON code block — no commentary before or after it — so I can hand it straight to the Claude Code session that maintains this dashboard. Shape it like this:
+Reply with ONLY a single fenced JSON code block — no commentary before or after — so I can hand it straight to the Claude Code session that maintains this dashboard:
 
 \`\`\`json
 ${JSON.stringify(example, null, 2)}
@@ -1238,13 +1236,11 @@ ${JSON.stringify(example, null, 2)}
 
 Rules for the JSON:
   - One top-level key per year pulled, each holding an array of property objects.
-  - Include every active property from the Property Directory, even ones with $0 CAM/Tax/Insurance activity (use 0, and add a comment explaining why).
+  - Include every property from the "cam.tax" list, even ones with $0 activity (use 0 and add a comment explaining why).
   - "taxes" / "insurance" / "cam" are full-year cash-basis dollar totals — numbers only, no "$" or commas.
-  - "flags" is either null, "review", "multi", or "multi, review".
-  - "comments" is an object keyed by the field it explains (e.g. "taxes", "cam") — omit keys that don't need an explanation, and leave it as {} if nothing needs flagging.
-  - Do not include a "total" field — the dashboard calculates that.
-
-Once you reply, I'll paste your JSON straight into the Claude Code chat connected to the CAM-Taxes-Insurance dashboard repo and ask it to load the new year(s) in.`;
+  - "flags" is null, "review", "multi", or "multi, review".
+  - "comments" is an object keyed by the field it explains — omit keys that don't need one; leave as {} if nothing needs flagging.
+  - Do not include a "total" field — the dashboard calculates that.`;
 }
 
 // ---------- Export ----------
