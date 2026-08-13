@@ -106,6 +106,9 @@
   .flagbadge{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;letter-spacing:.2px}
   .fb-amber{background:var(--amber-bg);color:var(--amber)}
   .fb-blue{background:var(--blue-bg);color:var(--blue)}
+  .flag-toggle{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);
+    cursor:pointer;user-select:none;margin-right:10px}
+  .flag-toggle input{margin:0;cursor:pointer}
 
   /* Year comparison */
   .cmp-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -680,8 +683,13 @@ function renderTable(){
     const r=rec(p,y), t=total(p,y), sf=+p.sf||0;
     const f=flagsOf(p);
     let badges='';
-    if(f.multi) badges+=`<span class="flagbadge fb-blue" title="Multi-address — confirm SF">▦ Multi</span>`;
-    if(f.review) badges+=`<span class="flagbadge fb-amber" title="Flagged for review">⚑ Review</span>`;
+    if(state.edit){
+      badges = `<label class="flag-toggle"><input type="checkbox" class="flag-chk" data-id="${p.id}" data-flag="multi" ${f.multi?'checked':''}> ▦ Multi</label>`+
+               `<label class="flag-toggle"><input type="checkbox" class="flag-chk" data-id="${p.id}" data-flag="review" ${f.review?'checked':''}> ⚑ Review</label>`;
+    } else {
+      if(f.multi) badges+=`<span class="flagbadge fb-blue" title="Multi-address — confirm SF">▦ Multi</span>`;
+      if(f.review) badges+=`<span class="flagbadge fb-amber" title="Flagged for review">⚑ Review</span>`;
+    }
     const mv = state.metric==='persf';
     const cell=(key)=>{
       const raw=+r[key]||0; const val = mv? perSf(raw,sf):raw;
@@ -724,6 +732,7 @@ function renderTable(){
   $('#tblYear').textContent = state.metric==='persf'?`${y} · $ per sq ft`:`${y} · dollars`;
   bindEditInputs('#tbody');
   bindDeleteButtons();
+  bindFlagToggles('#tbody');
 }
 
 // ---------- Chart (stacked bars) ----------
@@ -1072,6 +1081,32 @@ function bindDeleteButtons(){
       }catch(err){ console.error('Failed to delete property', err); showActionError('Failed to delete property. Please retry.'); }
     });
   });
+}
+// flags is a single free-text-ish field (see flagsOf()'s substring match), but
+// in practice every property in this dataset uses one of these four values -
+// composing it from the two checkboxes keeps that convention instead of
+// letting ad-hoc text accumulate.
+function composeFlags(multi, review){
+  if(multi && review) return 'Multi-address · Review';
+  if(multi) return 'Multi-address';
+  if(review) return 'Review';
+  return null;
+}
+function bindFlagToggles(rootSel){
+  document.querySelectorAll(`${rootSel} .flag-chk`).forEach(chk=>{
+    chk.addEventListener('click',e=>e.stopPropagation());
+    chk.addEventListener('change',()=>handleFlagChange(chk));
+  });
+}
+async function handleFlagChange(chk){
+  const id=+chk.dataset.id; const p=P.find(x=>x.id===id); if(!p) return;
+  const row=chk.closest('tr');
+  const multi=row.querySelector('.flag-chk[data-flag="multi"]').checked;
+  const review=row.querySelector('.flag-chk[data-flag="review"]').checked;
+  p.flags=composeFlags(multi,review);
+  renderTable();
+  try{ await saveProperty(p); }
+  catch(err){ console.error('Failed to save flag change', err); showActionError('Failed to save flag change — it will not persist after a refresh. Please retry.'); }
 }
 async function saveProperty(p){
   const updated = await apiPut(`/api/properties/${p.id}`, {name:p.name, address:p.address, sf:p.sf, flags:p.flags, data:p.data});

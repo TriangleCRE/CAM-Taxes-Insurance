@@ -340,7 +340,8 @@
      "total": 2440,
      "comments": {
       "taxes": "No reimbursable Property Tax (5350) posted for 2023.",
-      "insurance": "No reimbursable Insurance (5320) posted for 2023."
+      "insurance": "No reimbursable Insurance (5320) posted for 2023.",
+      "cam": "Leigh Ann confirmed (Aug 2026) CAM for this property isn't billed through Yardi at all - it shares some expenses with neighboring properties and not others. Treat this figure as Yardi's reimbursable-account view only, not the actual amount billed."
      }
     },
     "2024": {
@@ -349,7 +350,8 @@
      "cam": 2684.25,
      "total": 3878.25,
      "comments": {
-      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data."
+      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data.",
+      "cam": "Leigh Ann confirmed (Aug 2026) CAM for this property isn't billed through Yardi at all - it shares some expenses with neighboring properties and not others. Treat this figure as Yardi's reimbursable-account view only, not the actual amount billed."
      }
     },
     "2025": {
@@ -358,7 +360,8 @@
      "cam": 2903,
      "total": 2903,
      "comments": {
-      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data."
+      "Taxes": "Property Tax shows $0 in the reimbursable (5000) accounts for both years - likely the tenant pays the county directly rather than through this property's books. Worth a quick confirmation rather than treating as missing data.",
+      "cam": "Leigh Ann confirmed (Aug 2026) CAM for this property isn't billed through Yardi at all - it shares some expenses with neighboring properties and not others. Treat this figure as Yardi's reimbursable-account view only, not the actual amount billed."
      }
     }
    }
@@ -367,7 +370,7 @@
    "name": "Building - Log Lot - Old Cash Advance",
    "address": "57 Lee Jackson Highway (Unit 117), Staunton, VA",
    "sf": 1784,
-   "flags": null,
+   "flags": "Review",
    "data": {
     "2024": {
      "taxes": 0,
@@ -381,7 +384,9 @@
      "insurance": 0,
      "cam": 0,
      "total": 1564.16,
-     "comments": {}
+     "comments": {
+      "cam": "Leigh Ann noted (Aug 2026) she likely didn't bill 2025 CAM for this property through Yardi either - like F&M Bank, it shares some expenses with neighboring properties and not others, which doesn't flow cleanly into a Yardi reconciliation statement."
+     }
     }
    }
   },
@@ -418,7 +423,8 @@
      "total": 29252.06,
      "comments": {
       "sf": "Address includes multiple street numbers - confirm this SF represents the correct/combined parcel.",
-      "Insurance": "A nearly identical amount also appears in the non-reimbursable (6000) bucket for this year - possible duplicate/double entry. This figure uses the reimbursable (5000) amount only; worth a quick check before finalizing."
+      "Insurance": "A nearly identical amount also appears in the non-reimbursable (6000) bucket for this year - possible duplicate/double entry. This figure uses the reimbursable (5000) amount only; worth a quick check before finalizing.",
+      "cam": "Leigh Ann confirmed (Aug 2026) the CAM reconciliation for this property hasn't been finalized yet - there's an open question about which meter is tied to the shared electric usage, so treat this figure as provisional until that's resolved."
      }
     }
    }
