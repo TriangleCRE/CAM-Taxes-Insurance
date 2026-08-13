@@ -239,6 +239,7 @@
     background:#FAFBFC;color:var(--ink);white-space:pre-wrap;resize:vertical}
   .yp-preview:focus{outline:none;border-color:var(--green)}
   .btn.copied{background:var(--green-l);border-color:var(--green);color:var(--green-d)}
+  .yp-import-msg{font-size:12.5px;font-weight:600;color:var(--muted)}
 
   .footer{color:var(--faint);font-size:12px;text-align:center;padding:26px 0 8px}
   .empty{padding:40px;text-align:center;color:var(--muted)}
@@ -300,7 +301,7 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9v-5.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V20h2.5a1 1 0 0 0 1-1v-9"/></svg>
       Dashboard Hub
     </a>
-    <button class="btn ghost" id="yardiPullBtn" title="Generate a prompt to pull CAM, Taxes &amp; Insurance data from Yardi">
+    <button class="btn ghost" id="yardiPullBtn" title="Pull CAM, Taxes &amp; Insurance data from Yardi and import it into this dashboard">
       📅 Yardi Pull Prompt
     </button>
     <div class="yearseg" id="yearSeg"></div>
@@ -439,16 +440,29 @@
 // below) instead of being hard-coded here.
 let P = [];
 let REMOVED = [];
-const YEARS = [2023,2024,2025];
+// YEARS is derived from whatever years actually show up in the loaded
+// property data (see deriveYears(), called from bootstrap() and again after
+// a Yardi-pull import) rather than hardcoded. That means adding a new year
+// - via the Yardi Pull Prompt's "Import reply" step, or an Edit-mode entry -
+// is enough on its own to make that year show up in the year toggle, the
+// compare pickers, and everywhere else, with no code change required.
+let YEARS = [];
 // Most-recent-pair shorthand, used wherever the UI shows a single YoY
 // comparison (detail modal, portfolio trend, YoY sort) instead of the full
 // year list — always the latest two years on record, however many years
 // YEARS grows to.
-const YOY_FROM = YEARS[YEARS.length-2] ?? YEARS[0];
-const YOY_TO = YEARS[YEARS.length-1];
+let YOY_FROM, YOY_TO;
+function deriveYears(){
+  const set = new Set();
+  P.forEach(p=>Object.keys(p.data||{}).forEach(y=>set.add(+y)));
+  YEARS = [...set].sort((a,b)=>a-b);
+  if(!YEARS.length) YEARS=[new Date().getFullYear()];
+  YOY_FROM = YEARS[YEARS.length-2] ?? YEARS[0];
+  YOY_TO = YEARS[YEARS.length-1];
+}
 
-const state = { year:YOY_TO, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed',
-  cmpOpen:false, cmpFrom:YOY_FROM, cmpTo:YOY_TO, cmpSort:'total', cmpDir:-1, cmpView:'chart' };
+const state = { year:null, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed',
+  cmpOpen:false, cmpFrom:null, cmpTo:null, cmpSort:'total', cmpDir:-1, cmpView:'chart' };
 
 // ---------- Auth ----------
 function showApp(){
@@ -519,6 +533,12 @@ async function bootstrap(){
     const [props, removed] = await Promise.all([apiGet('/api/properties'), apiGet('/api/removed')]);
     P = props;
     REMOVED = removed;
+    deriveYears();
+    state.year = YOY_TO;
+    state.cmpFrom = YOY_FROM;
+    state.cmpTo = YOY_TO;
+    renderYearSeg();
+    renderCompareYearOptions();
     renderRemoved();
     renderAll();
   }catch(err){
@@ -1144,44 +1164,69 @@ function ypDefaultYear(){ return (YEARS.length? Math.max(...YEARS):new Date().ge
 // Next year not already selected as a chip — keeps the "+ Add year" input from
 // suggesting a duplicate of a year that's already picked.
 function ypNextYear(){ return Math.max(ypDefaultYear()-1, ...ypYears)+1; }
+let ypImportPlan = null;
 function openYardiPullModal(){
   if(!ypYears.length) ypYears=[ypDefaultYear()];
+  ypImportPlan = null;
   $('#modal').innerHTML = `
     <div class="mh yp-modal">
       <div>
-        <h2>Generate Yardi Pull Prompt</h2>
-        <div class="yp-intro">Pick the year(s) you want pulled, run the Property Comparison report in Yardi, then paste this prompt into a Claude session with the exported Excel file attached. Bring its reply back here, then hand it to the Claude Code chat connected to this dashboard's repo.</div>
+        <h2>Yardi Pull</h2>
+        <div class="yp-intro">Pick the year(s) you want pulled, run the Property Comparison report in Yardi, then paste the prompt into a Claude session with the exported Excel file attached. Bring its JSON reply back to the Import tab here to load it straight into the dashboard — no coding session required.</div>
       </div>
       <button class="xbtn" id="closeX">✕</button>
     </div>
     <div class="mbody yp-modal">
-      <div class="yp-note">
-        <b>Before you paste this in:</b>
-        <ul>
-          <li>In Yardi Breeze, run the <b>Property Comparison</b> report scoped to the <code>CAM/Tax/Ins. Properties</code> list, Report Columns = <b>Actual</b>, Cash basis, Month Range 01/YYYY–12/YYYY, Show GL Account ON, Consolidate OFF, and <b>Export to Excel</b>.</li>
-          <li>Attach that Excel file to the Claude session along with this prompt. This session no longer needs to be logged into Yardi — it reads the file, it doesn't navigate the site.</li>
-          <li>Optionally also attach an <b>Export to Excel</b> of this dashboard (top toolbar) so the session can cross-check property names, addresses, and square footage against what's already tracked here.</li>
-        </ul>
-        If any properties were acquired, sold, or renamed since the last pull, say so in the same message.
+      <div class="tabs" id="ypTabs" style="margin-bottom:18px">
+        <button data-tab="gen" class="on">1. Generate prompt</button>
+        <button data-tab="import">2. Import reply</button>
       </div>
 
-      <div class="yp-yearsrow">
-        <div class="yp-yearlist" id="ypYearList"></div>
-        <div class="yp-addrow">
-          <input type="number" id="ypYearInput" min="2000" max="2100" step="1" value="${ypNextYear()}">
-          <button class="btn ghost" type="button" id="ypAddYear">+ Add year</button>
+      <div id="ypGenPane">
+        <div class="yp-note">
+          <b>Before you paste this in:</b>
+          <ul>
+            <li>In Yardi Breeze, run the <b>Property Comparison</b> report scoped to the <code>CAM/Tax/Ins. Properties</code> list, Report Columns = <b>Actual</b>, Cash basis, Month Range 01/YYYY–12/YYYY, Show GL Account ON, Consolidate OFF, and <b>Export to Excel</b>.</li>
+            <li>Attach that Excel file to the Claude session along with this prompt. This session no longer needs to be logged into Yardi — it reads the file, it doesn't navigate the site.</li>
+            <li>Optionally also attach an <b>Export to Excel</b> of this dashboard (top toolbar) so the session can cross-check property names, addresses, and square footage against what's already tracked here.</li>
+          </ul>
+          If any properties were acquired, sold, or renamed since the last pull, say so in the same message.
         </div>
-      </div>
-      <div class="yp-empty" id="ypEmpty" style="display:none">Add at least one year above to generate the prompt.</div>
 
-      <div class="yp-preview-lab">
-        <span>Prompt preview</span>
-        <button class="btn primary" type="button" id="ypCopyBtn">⧉ Copy prompt</button>
+        <div class="yp-yearsrow">
+          <div class="yp-yearlist" id="ypYearList"></div>
+          <div class="yp-addrow">
+            <input type="number" id="ypYearInput" min="2000" max="2100" step="1" value="${ypNextYear()}">
+            <button class="btn ghost" type="button" id="ypAddYear">+ Add year</button>
+          </div>
+        </div>
+        <div class="yp-empty" id="ypEmpty" style="display:none">Add at least one year above to generate the prompt.</div>
+
+        <div class="yp-preview-lab">
+          <span>Prompt preview</span>
+          <button class="btn primary" type="button" id="ypCopyBtn">⧉ Copy prompt</button>
+        </div>
+        <textarea class="yp-preview" id="ypPreview" readonly></textarea>
       </div>
-      <textarea class="yp-preview" id="ypPreview" readonly></textarea>
+
+      <div id="ypImportPane" style="display:none">
+        <div class="yp-intro" style="margin:0 0 14px">Paste the JSON reply from your Yardi-pull Claude session below. Nothing is saved until you preview it and click Apply.</div>
+        <textarea class="yp-preview" id="ypImportInput" placeholder="Paste the JSON here…" style="min-height:160px"></textarea>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn primary" type="button" id="ypPreviewImportBtn">Preview import</button>
+          <span class="yp-import-msg" id="ypImportMsg"></span>
+        </div>
+        <div id="ypImportPreview"></div>
+      </div>
     </div>`;
   $('#overlay').classList.add('show');
   $('#closeX').onclick=closeDetail;
+  $('#ypTabs').addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    $('#ypTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b));
+    $('#ypGenPane').style.display = b.dataset.tab==='gen'?'':'none';
+    $('#ypImportPane').style.display = b.dataset.tab==='import'?'':'none';
+  });
   $('#ypAddYear').onclick=()=>{
     const inp=$('#ypYearInput'); const v=+inp.value;
     if(v && !ypYears.includes(v)){ ypYears.push(v); ypYears.sort((a,b)=>a-b); renderYpModal(); }
@@ -1201,6 +1246,7 @@ function openYardiPullModal(){
     btn.textContent='✓ Copied'; btn.classList.add('copied');
     setTimeout(()=>{ btn.textContent=orig; btn.classList.remove('copied'); },1600);
   });
+  $('#ypPreviewImportBtn').addEventListener('click', previewYpImport);
   renderYpModal();
 }
 function renderYpModal(){
@@ -1208,6 +1254,155 @@ function renderYpModal(){
   list.innerHTML = ypYears.map(y=>`<span class="yp-chip">${y}<button type="button" data-rm="${y}" title="Remove ${y}">✕</button></span>`).join('');
   $('#ypEmpty').style.display = ypYears.length? 'none':'block';
   $('#ypPreview').value = ypYears.length? buildYardiPrompt(ypYears) : '';
+}
+
+// ---------- Yardi Pull Prompt: import reply ----------
+// Drop a trailing " (...)" qualifier so e.g. "Building - Old Planters LLC
+// (Starbucks)" in the dashboard matches "Building - Old Planters LLC" in a
+// pull reply that doesn't carry that qualifier (and vice versa).
+function ypNormalizeName(name){
+  return String(name||'').replace(/\s*\([^)]*\)\s*$/,'').trim().toLowerCase();
+}
+function parseYardiReply(raw){
+  let text = String(raw||'').trim();
+  if(!text) throw new Error('Paste the JSON reply first.');
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if(fence) text = fence[1].trim();
+  let parsed;
+  try{ parsed = JSON.parse(text); }
+  catch(err){ throw new Error("That doesn't look like valid JSON — " + err.message); }
+  if(!parsed || typeof parsed!=='object' || Array.isArray(parsed)){
+    throw new Error('Expected a JSON object keyed by year, e.g. {"2023": [ { "name": ..., "taxes": ... }, ... ]}.');
+  }
+  return parsed;
+}
+// Matches each (year, property) entry in the parsed reply against the
+// properties already loaded in P. Never guesses past an ambiguous or
+// missing match - those are surfaced as `unmatched` instead of silently
+// dropped, same as scripts/apply-2023-data.js does for the script path.
+function buildYpImportPlan(parsed){
+  const byNorm = new Map();
+  P.forEach(p=>{
+    const key=ypNormalizeName(p.name);
+    if(!byNorm.has(key)) byNorm.set(key,[]);
+    byNorm.get(key).push(p);
+  });
+  const rows=[], unmatched=[];
+  Object.entries(parsed).forEach(([year, entries])=>{
+    if(!Array.isArray(entries)) return;
+    entries.forEach(entry=>{
+      const name = entry && entry.name;
+      const matches = byNorm.get(ypNormalizeName(name)) || [];
+      if(matches.length!==1){
+        unmatched.push({ name: name||'(missing name)', year, reason: matches.length>1? 'matches more than one property':'no matching property' });
+        return;
+      }
+      const p=matches[0];
+      const taxes=+entry.taxes||0, insurance=+entry.insurance||0, cam=+entry.cam||0;
+      const total=Math.round((taxes+insurance+cam)*100)/100;
+      rows.push({
+        p, year:String(year), taxes, insurance, cam, total,
+        comments: entry.comments && typeof entry.comments==='object'? entry.comments : {},
+        flags: entry.flags || null,
+        conflict: !!(p.data && p.data[year]),
+      });
+    });
+  });
+  return { rows, unmatched };
+}
+function previewYpImport(){
+  const msg=$('#ypImportMsg');
+  try{
+    const parsed = parseYardiReply($('#ypImportInput').value);
+    ypImportPlan = buildYpImportPlan(parsed);
+    msg.textContent=''; msg.style.color='';
+  }catch(err){
+    ypImportPlan = null;
+    msg.textContent = err.message;
+    msg.style.color = 'var(--pos)';
+  }
+  renderYpImportPreview();
+}
+function renderYpImportPreview(){
+  const box=$('#ypImportPreview'); if(!box) return;
+  if(!ypImportPlan){ box.innerHTML=''; return; }
+  const { rows, unmatched } = ypImportPlan;
+  if(!rows.length && !unmatched.length){ box.innerHTML = '<div class="yp-empty">Nothing to preview — that reply had no property entries.</div>'; return; }
+  const conflicts = rows.filter(r=>r.conflict).length;
+  const trs = rows.map((r,i)=>`
+    <tr>
+      <td><input type="checkbox" class="yp-imp-chk" data-i="${i}" ${r.conflict?'':'checked'}></td>
+      <td>${r.p.name}</td>
+      <td>${r.year}</td>
+      <td class="tnum">${usd(r.taxes)}</td>
+      <td class="tnum">${usd(r.insurance)}</td>
+      <td class="tnum">${usd(r.cam)}</td>
+      <td class="tnum">${usd(r.total)}</td>
+      <td>${r.conflict?`<span class="flagbadge fb-amber">⚑ ${r.year} already has data</span> `:''}${r.flags?`<span class="flagbadge fb-blue" title="Suggested by the pull — not applied automatically, add via Edit if you agree">◆ ${r.flags}</span>`:''}</td>
+    </tr>`).join('');
+  const unmatchedHtml = unmatched.length? `
+    <div class="yp-note" style="margin-top:14px">
+      <b>Not matched — nothing imported for these:</b>
+      <ul>${unmatched.map(u=>`<li>"${u.name}" (${u.year}) — ${u.reason}</li>`).join('')}</ul>
+    </div>` : '';
+  box.innerHTML = `
+    ${rows.length? `<div class="tablewrap" style="margin-top:14px">
+      <table class="data">
+        <thead><tr><th></th><th>Property</th><th>Year</th><th>Taxes</th><th>Insurance</th><th>CAM</th><th>Total</th><th>Notes</th></tr></thead>
+        <tbody>${trs}</tbody>
+      </table>
+    </div>` : ''}
+    ${unmatchedHtml}
+    ${rows.length? `<div style="display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn primary" type="button" id="ypApplyBtn">Apply selected</button>
+      <span class="yp-import-msg" id="ypApplyMsg">${conflicts? conflicts+' row(s) already have data for that year and are unchecked by default — check them to overwrite.':''}</span>
+    </div>` : ''}`;
+  const applyBtn=$('#ypApplyBtn');
+  if(applyBtn) applyBtn.addEventListener('click', applyYpImport);
+}
+async function applyYpImport(){
+  if(!ypImportPlan) return;
+  const selected = [...document.querySelectorAll('.yp-imp-chk')]
+    .filter(c=>c.checked)
+    .map(c=>ypImportPlan.rows[+c.dataset.i]);
+  if(!selected.length) return;
+  const btn=$('#ypApplyBtn'), msg=$('#ypApplyMsg');
+  btn.disabled=true; btn.textContent='Applying…';
+  // Group by property so one with several selected years is saved once,
+  // not once per year.
+  const byProperty = new Map();
+  selected.forEach(r=>{
+    if(!byProperty.has(r.p.id)) byProperty.set(r.p.id, r.p);
+    const p = byProperty.get(r.p.id);
+    if(!p.data) p.data={};
+    p.data[r.year] = { taxes:r.taxes, insurance:r.insurance, cam:r.cam, total:r.total, comments:r.comments };
+  });
+  const properties=[...byProperty.values()];
+  const results = await Promise.allSettled(properties.map(p=>saveProperty(p)));
+  const failed = results.filter(r=>r.status==='rejected').length;
+  // A newly-imported year (e.g. this dashboard's first-ever 2026 pull) needs
+  // YEARS re-derived so it shows up in the year toggle/compare pickers
+  // immediately, with no reload and no code change.
+  deriveYears(); renderYearSeg(); renderCompareYearOptions(); renderRemoved(); renderAll();
+  if(failed){
+    // Failure keeps the preview/checkboxes as-is so the user can just hit
+    // Apply again - #ypApplyMsg is still attached since we haven't re-run
+    // renderYpImportPreview() in this branch.
+    btn.disabled=false; btn.textContent='Apply selected';
+    msg.textContent = `${properties.length-failed} of ${properties.length} propert${properties.length===1?'y':'ies'} saved — ${failed} failed. Check the error banner and retry.`;
+    msg.style.color='var(--pos)';
+    showActionError('Some properties failed to save during import — see the import preview for which ones.');
+  } else {
+    // Success clears ypImportPlan and re-renders the preview box, which
+    // would wipe a message written to #ypApplyMsg (it lives inside that
+    // box) - use the persistent #ypImportMsg above the textarea instead.
+    ypImportPlan=null;
+    $('#ypImportInput').value='';
+    renderYpImportPreview();
+    const topMsg=$('#ypImportMsg');
+    topMsg.textContent = `Imported ${selected.length} propert${selected.length===1?'y-year':'y-years'} across ${properties.length} propert${properties.length===1?'y':'ies'}.`;
+    topMsg.style.color='var(--neg)';
+  }
 }
 function buildYardiPrompt(years){
   const yearList = years.join(', ');
@@ -1241,7 +1436,7 @@ STEP 4 — Flag anything unusual
 Flag anything a human should re-check: a property spanning multiple parcels/addresses ("multi"), a category missing or $0 for the full year ("review"), a large swing vs. the prior year, a property acquired or sold mid-year. Combine as "multi, review" when both apply.
 
 STEP 5 — Reply in this exact format
-Reply with ONLY a single fenced JSON code block — no commentary before or after — so I can hand it straight to the Claude Code session that maintains this dashboard:
+Reply with ONLY a single fenced JSON code block — no commentary before or after — so I can paste it straight into this dashboard's Yardi Pull → Import step:
 
 \`\`\`json
 ${JSON.stringify(example, null, 2)}
@@ -1357,8 +1552,6 @@ $('#cmpViewSeg').addEventListener('click',e=>{
   $('#cmpTableWrap').style.display = state.cmpView==='table'?'':'none';
   $('#cmpChart').style.display = state.cmpView==='chart'?'':'none';
 });
-renderCompareYearOptions();
-renderYearSeg();
 $('#addBtn').addEventListener('click',openAddPropertyModal);
 $('#addRemovedBtn').addEventListener('click',openAddRemovedModal);
 $('#xlsxBtn').addEventListener('click',exportXlsx);
