@@ -954,9 +954,9 @@ function renderRemoved(){
     <p><span class="kb">▦ Multi-address</span> — the name/address lists more than one street number; confirm the SF represents the correct/combined parcel.</p>
     <p><span class="k">⚑ Review</span> — a data anomaly (unexplained $0, possible duplicate posting, etc.).</p>
     <h3>Worth a closer look</h3>
-    <p><b>Center · 143/153 Crown Drive (Goodwill Danville):</b> tenant started 8/2025, so 2023 and 2024 are legitimately blank (pre-lease). 2025 Insurance has a near-duplicate amount sitting in the non-reimbursable bucket. Leigh Ann confirmed (Aug 2026) the CAM reconciliation for this property hasn't been finalized yet — there's an open question about which meter is tied to the shared electric usage, so treat 2025 CAM as provisional until that's resolved.</p>
-    <p><b>Building · Log Lot · Old Cash Advance:</b> current tenant only moved in 8/2025, so 2023–2024 reflect a prior tenant/vacancy rather than a data gap — it also wasn't yet a column in the 2023 Yardi report. Leigh Ann noted (Aug 2026) she likely didn't bill 2025 CAM for this property through Yardi either — like F&amp;M Bank below, it shares some expenses with neighboring properties and not others, which doesn't flow cleanly into a Yardi reconciliation statement.</p>
-    <p><b>Building · F&amp;M Bank:</b> $0 Property Tax in all three years and $0 Insurance in 2023 and 2025. Leigh Ann confirmed (Aug 2026) CAM for this property isn't billed through Yardi at all — it shares some expenses with neighboring properties and not others, so treat the CAM figure here as Yardi's reimbursable-account view only, not a full reconciliation.</p>`;
+    <p><b>Center · 143/153 Crown Drive (Goodwill Danville):</b> tenant started 8/2025, so 2023 and 2024 are legitimately blank (pre-lease). 2025 Insurance has a near-duplicate amount sitting in the non-reimbursable bucket. Property management confirmed (Aug 2026) the CAM reconciliation for this property hasn't been finalized yet — there's an open question about which meter is tied to the shared electric usage, so treat 2025 CAM as provisional until that's resolved.</p>
+    <p><b>Building · Log Lot · Old Cash Advance:</b> current tenant only moved in 8/2025, so 2023–2024 reflect a prior tenant/vacancy rather than a data gap — it also wasn't yet a column in the 2023 Yardi report. Property management noted (Aug 2026) that 2025 CAM likely wasn't billed for this property through Yardi either — like F&amp;M Bank below, it shares some expenses with neighboring properties and not others, which doesn't flow cleanly into a Yardi reconciliation statement.</p>
+    <p><b>Building · F&amp;M Bank:</b> $0 Property Tax in all three years and $0 Insurance in 2023 and 2025. Property management confirmed (Aug 2026) CAM for this property isn't billed through Yardi at all — it shares some expenses with neighboring properties and not others, so treat the CAM figure here as Yardi's reimbursable-account view only, not a full reconciliation.</p>`;
 }
 
 // ---------- Detail modal ----------
@@ -1246,7 +1246,11 @@ function openYardiPullModal(){
       </div>
 
       <div id="ypImportPane" style="display:none">
-        <div class="yp-intro" style="margin:0 0 14px">Paste the JSON reply from your Yardi-pull Claude session below. Nothing is saved until you preview it and click Apply.</div>
+        <div class="yp-intro" style="margin:0 0 14px">Paste the JSON reply from your Yardi-pull Claude session below, or upload the .json file it gave you. Nothing is saved until you preview it and click Apply.</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <label class="btn ghost" for="ypImportFile" style="cursor:pointer">⬆ Upload .json file</label>
+          <input type="file" id="ypImportFile" accept=".json,application/json" style="display:none">
+        </div>
         <textarea class="yp-preview" id="ypImportInput" placeholder="Paste the JSON here…" style="min-height:160px"></textarea>
         <div style="display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap">
           <button class="btn primary" type="button" id="ypPreviewImportBtn">Preview import</button>
@@ -1283,6 +1287,19 @@ function openYardiPullModal(){
     setTimeout(()=>{ btn.textContent=orig; btn.classList.remove('copied'); },1600);
   });
   $('#ypPreviewImportBtn').addEventListener('click', previewYpImport);
+  $('#ypImportFile').addEventListener('change', async e=>{
+    const file = e.target.files && e.target.files[0];
+    e.target.value=''; // allow re-selecting the same file (e.g. after re-exporting it)
+    if(!file) return;
+    try{
+      $('#ypImportInput').value = await file.text();
+      previewYpImport();
+    }catch(err){
+      const msg=$('#ypImportMsg');
+      msg.textContent = `Couldn't read "${file.name}" — ${err.message}`;
+      msg.style.color='var(--pos)';
+    }
+  });
   renderYpModal();
 }
 function renderYpModal(){
