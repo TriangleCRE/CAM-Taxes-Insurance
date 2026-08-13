@@ -1410,7 +1410,7 @@ function renderYpImportPreview(){
   box.innerHTML = `
     ${rows.length? `<div class="tablewrap" style="margin-top:14px">
       <table class="data">
-        <thead><tr><th></th><th>Property</th><th>Year</th><th>Taxes</th><th>Insurance</th><th>CAM</th><th>Total</th><th>Notes</th></tr></thead>
+        <thead><tr><th><input type="checkbox" id="ypSelectAll" title="Select all"></th><th>Property</th><th>Year</th><th>Taxes</th><th>Insurance</th><th>CAM</th><th>Total</th><th>Notes</th></tr></thead>
         <tbody>${trs}</tbody>
       </table>
     </div>` : ''}
@@ -1421,6 +1421,18 @@ function renderYpImportPreview(){
     </div>` : ''}`;
   const applyBtn=$('#ypApplyBtn');
   if(applyBtn) applyBtn.addEventListener('click', applyYpImport);
+  const selectAll=$('#ypSelectAll');
+  if(selectAll){
+    const rowChks=[...document.querySelectorAll('.yp-imp-chk')];
+    const syncSelectAll=()=>{
+      const checkedCount=rowChks.filter(c=>c.checked).length;
+      selectAll.checked = rowChks.length>0 && checkedCount===rowChks.length;
+      selectAll.indeterminate = checkedCount>0 && checkedCount<rowChks.length;
+    };
+    syncSelectAll();
+    selectAll.addEventListener('change',()=>{ rowChks.forEach(c=>c.checked=selectAll.checked); });
+    rowChks.forEach(c=>c.addEventListener('change',syncSelectAll));
+  }
 }
 async function applyYpImport(){
   if(!ypImportPlan) return;
