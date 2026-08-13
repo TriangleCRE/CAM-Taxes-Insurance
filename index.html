@@ -1132,13 +1132,16 @@ function openAddRemovedModal(){
 // pasted into the Claude Code chat connected to this repo.
 let ypYears = [];
 function ypDefaultYear(){ return (YEARS.length? Math.max(...YEARS):new Date().getFullYear()-1)+1; }
+// Next year not already selected as a chip — keeps the "+ Add year" input from
+// suggesting a duplicate of a year that's already picked.
+function ypNextYear(){ return Math.max(ypDefaultYear()-1, ...ypYears)+1; }
 function openYardiPullModal(){
   if(!ypYears.length) ypYears=[ypDefaultYear()];
   $('#modal').innerHTML = `
     <div class="mh yp-modal">
       <div>
         <h2>Generate Yardi Pull Prompt</h2>
-        <div class="yp-intro">Pick the year(s) you want pulled — then copy the prompt into a Claude session that has access to Yardi Breeze. Bring its reply back here, then hand it to the Claude Code chat connected to this dashboard's repo.</div>
+        <div class="yp-intro">Pick the year(s) you want pulled, run your Yardi packet, then paste this prompt into a Claude session with the downloaded packet attached. Bring its reply back here, then hand it to the Claude Code chat connected to this dashboard's repo.</div>
       </div>
       <button class="xbtn" id="closeX">✕</button>
     </div>
@@ -1151,14 +1154,12 @@ function openYardiPullModal(){
           <li>Optionally also attach an <b>Export to Excel</b> of this dashboard (top toolbar) so the session can cross-check property names, addresses, and square footage against what's already tracked here.</li>
         </ul>
         If any properties were acquired, sold, or renamed since the last pull, say so in the same message.
-        <br><br>
-        Bring the session's JSON reply back here, then hand it to the Claude Code chat connected to this repo.
       </div>
 
       <div class="yp-yearsrow">
         <div class="yp-yearlist" id="ypYearList"></div>
         <div class="yp-addrow">
-          <input type="number" id="ypYearInput" min="2000" max="2100" step="1" value="${ypDefaultYear()}">
+          <input type="number" id="ypYearInput" min="2000" max="2100" step="1" value="${ypNextYear()}">
           <button class="btn ghost" type="button" id="ypAddYear">+ Add year</button>
         </div>
       </div>
@@ -1175,7 +1176,7 @@ function openYardiPullModal(){
   $('#ypAddYear').onclick=()=>{
     const inp=$('#ypYearInput'); const v=+inp.value;
     if(v && !ypYears.includes(v)){ ypYears.push(v); ypYears.sort((a,b)=>a-b); renderYpModal(); }
-    inp.value=ypDefaultYear();
+    inp.value=ypNextYear();
   };
   $('#ypYearInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#ypAddYear').click(); } });
   $('#ypYearList').addEventListener('click',e=>{
