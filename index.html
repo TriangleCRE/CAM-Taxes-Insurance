@@ -559,6 +559,15 @@ function usd(n,dec=0){ if(n===null||n===undefined||isNaN(n)) return '—';
 function psf(n){ if(!isFinite(n)||n===0) return (n===0?'$0.00':'—'); return '$'+Number(n).toFixed(2); }
 function rec(p,y){ return p.data[y] || {taxes:0,insurance:0,cam:0,comments:{}}; }
 function total(p,y){ const r=rec(p,y); return (+r.taxes||0)+(+r.insurance||0)+(+r.cam||0); }
+// Comment keys have accumulated inconsistent casing over time (some pulls/
+// scripts write "taxes", others "Taxes"). Normalize to a proper display
+// label regardless of how the key is actually stored.
+const COMMENT_FIELD_LABELS = { taxes:'Taxes', insurance:'Insurance', cam:'CAM', sf:'Sq Ft' };
+function commentFieldLabel(field){
+  const known = COMMENT_FIELD_LABELS[String(field).toLowerCase()];
+  if(known) return known;
+  return field ? field.charAt(0).toUpperCase()+field.slice(1) : field;
+}
 function perSf(v,sf){ return sf>0 ? v/sf : 0; }
 function metricVal(p,y,key){ // key in taxes/insurance/cam/total
   const r=rec(p,y); const raw = key==='total'? total(p,y) : (+r[key]||0);
@@ -990,7 +999,7 @@ function openDetail(id){
     Object.entries(cm).forEach(([field,txt])=>{
       const isBlue=/multi|parcel|address/i.test(txt);
       callouts+=`<div class="flagcallout ${isBlue?'blue':'amber'}">
-        <div class="ftt">${isBlue?'▦':'⚑'} ${field} · ${y}</div>
+        <div class="ftt">${isBlue?'▦':'⚑'} ${commentFieldLabel(field)} · ${y}</div>
         <div class="cmt">${txt}</div></div>`;
     });
   });
