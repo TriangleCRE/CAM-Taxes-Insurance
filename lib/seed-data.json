@@ -6,6 +6,13 @@
    "sf": 9840,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 7985.08,
+     "insurance": 5847,
+     "cam": 10697.08,
+     "total": 24529.16,
+     "comments": {}
+    },
     "2024": {
      "taxes": 7985.08,
      "insurance": 6792,
@@ -28,6 +35,13 @@
    "sf": 25422,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 37179.94,
+     "insurance": 14094.63,
+     "cam": 17828.86,
+     "total": 69103.43,
+     "comments": {}
+    },
     "2024": {
      "taxes": 41981.69,
      "insurance": 19589.99,
@@ -50,6 +64,15 @@
    "sf": 41063,
    "flags": "Multi-address",
    "data": {
+    "2023": {
+     "taxes": 14242.41,
+     "insurance": 9794.7,
+     "cam": 21588.14,
+     "total": 45625.25,
+     "comments": {
+      "cam": "Spans two addresses (465 & 485 Lee Hwy) reported as one column."
+     }
+    },
     "2024": {
      "taxes": 19547.32,
      "insurance": 8354.5,
@@ -76,6 +99,13 @@
    "sf": 26750,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 11974.95,
+     "insurance": 6421,
+     "cam": 10038.85,
+     "total": 28434.8,
+     "comments": {}
+    },
     "2024": {
      "taxes": 11974.95,
      "insurance": 6421,
@@ -98,6 +128,13 @@
    "sf": 9820,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 16169.52,
+     "insurance": 5997,
+     "cam": 14097.02,
+     "total": 36263.54,
+     "comments": {}
+    },
     "2024": {
      "taxes": 16169.52,
      "insurance": 7072,
@@ -120,6 +157,13 @@
    "sf": 7450,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 5237.65,
+     "insurance": 741.24,
+     "cam": 9242.16,
+     "total": 15221.05,
+     "comments": {}
+    },
     "2024": {
      "taxes": 5237.65,
      "insurance": 1721.24,
@@ -142,6 +186,13 @@
    "sf": 9600,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 5178.6,
+     "insurance": 2705,
+     "cam": 3421.28,
+     "total": 11304.88,
+     "comments": {}
+    },
     "2024": {
      "taxes": 6418.36,
      "insurance": 2705,
@@ -164,6 +215,13 @@
    "sf": 7189.5,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 4956.21,
+     "insurance": 2815,
+     "cam": 9134.31,
+     "total": 16905.52,
+     "comments": {}
+    },
     "2024": {
      "taxes": 5839.08,
      "insurance": 2815,
@@ -186,6 +244,13 @@
    "sf": 45801,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 78023.14,
+     "insurance": 12401.9,
+     "cam": 23429.53,
+     "total": 113854.57,
+     "comments": {}
+    },
     "2024": {
      "taxes": 81873.84,
      "insurance": 17472.4,
@@ -208,6 +273,13 @@
    "sf": 5770,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 13283.77,
+     "insurance": 4315.1,
+     "cam": 6195.53,
+     "total": 23794.4,
+     "comments": {}
+    },
     "2024": {
      "taxes": 14503.06,
      "insurance": 7515.6,
@@ -230,6 +302,15 @@
    "sf": 3374,
    "flags": null,
    "data": {
+    "2023": {
+     "taxes": 5741.19,
+     "insurance": 3969,
+     "cam": 0,
+     "total": 9710.19,
+     "comments": {
+      "cam": "CAM nets to $0 — 2023 total reimbursable ($9,710.19) is entirely Property Tax ($5,741.19) + Insurance ($3,969.00); no other reimbursable accounts."
+     }
+    },
     "2024": {
      "taxes": 6050.2,
      "insurance": 5292,
@@ -252,6 +333,16 @@
    "sf": 2266,
    "flags": "Review",
    "data": {
+    "2023": {
+     "taxes": 0,
+     "insurance": 0,
+     "cam": 2440,
+     "total": 2440,
+     "comments": {
+      "taxes": "No reimbursable Property Tax (5350) posted for 2023.",
+      "insurance": "No reimbursable Insurance (5320) posted for 2023."
+     }
+    },
     "2024": {
      "taxes": 0,
      "insurance": 1194,
@@ -300,6 +391,17 @@
    "sf": 23015,
    "flags": "Multi-address · Review",
    "data": {
+    "2023": {
+     "taxes": 0,
+     "insurance": 0,
+     "cam": 0,
+     "total": 0,
+     "comments": {
+      "taxes": "$0 for 2023 — no reimbursable activity of any kind this year.",
+      "insurance": "$0 for 2023 — no reimbursable activity of any kind this year.",
+      "cam": "$0 for 2023; spans two parcels (143 & 153 Crown Drive). First activity appears in 2025, so this property looks onboarded after 2023."
+     }
+    },
     "2024": {
      "taxes": 0,
      "insurance": 0,
