@@ -156,6 +156,16 @@
   .cmpb-chip{font-size:10.5px;text-align:right;white-space:nowrap}
   .cmpb-row.grp-total{border-top:1px solid var(--line-2);margin-top:2px;padding-top:9px}
   .cmpb-row.grp-total .cmpb-lab{color:var(--charcoal);font-weight:700}
+  /* Detail-modal chart: the same cmpb-* markup as the Compare-years cards,
+     scaled up since it's the sole focus of the popup rather than one of many
+     small cards in a grid. */
+  .detail-chart{margin-bottom:8px}
+  .detail-chart .cmpb-row{grid-template-columns:92px 1fr 68px 22px;padding:8px 0}
+  .detail-chart .cmpb-lab{font-size:13px}
+  .detail-chart .cmpb-track{height:13px;border-radius:6px}
+  .detail-chart .cmpb-bar{border-radius:0 6px 6px 0}
+  .detail-chart .cmpb-chip .chip{font-size:12px;padding:3px 8px}
+  .detail-chart .cmpb-row.grp-total{padding-top:14px;margin-top:6px}
   tfoot td{padding:11px 12px;font-weight:700;color:var(--charcoal);border-top:2px solid var(--line);background:#FAFBFC;text-align:right}
   tfoot td:first-child{text-align:left}
   .edit-input{width:92px;text-align:right;border:1px solid var(--green);border-radius:6px;padding:5px 7px;font-size:13px;
@@ -903,13 +913,13 @@ function cmpCategoryMaxes(rows){
   CMP_CATS.forEach(([k])=>{ maxes[k]=Math.max(1,...rows.flatMap(r=>[r.cats[k].prev,r.cats[k].cur])); });
   return maxes;
 }
-function cmpChartRow(key,label,c,max){
+function cmpChartRow(key,label,c,max,fromYear,toYear){
   const color=CMP_COLOR[key];
   const prevPct=Math.min(100, c.prev/max*100);
   const curPct=Math.min(100, c.cur/max*100);
   const up=c.diff>0, dn=c.diff<0, cls=up?'up':dn?'down':'flat', ar=up?'▲':dn?'▼':'—';
   const pctTxt = c.pct===null ? (c.cur?'new':'—') : `${Math.abs(c.pct*100).toFixed(0)}%`;
-  const tipMsg = `${state.cmpFrom}: ${usd(c.prev)} · ${state.cmpTo}: ${usd(c.cur)} · ${ar} ${pctTxt}`;
+  const tipMsg = `${fromYear}: ${usd(c.prev)} · ${toYear}: ${usd(c.cur)} · ${ar} ${pctTxt}`;
   return `<div class="cmpb-row${key==='total'?' grp-total':''}">
     <div class="cmpb-lab">${label}</div>
     <div class="cmpb-bars tip" tabindex="0" aria-label="${label} ${tipMsg.replace(/"/g,'&quot;')}">
@@ -936,7 +946,7 @@ function renderCompareChart(){
   </div>`;
   const cards = rows.map(r=>`<div class="cmpb-card" data-open="${r.p.id}">
       <div class="cmpb-head"><span class="cmpb-name">${r.p.name}</span>${propBadgesHtml(r.p)}</div>
-      ${CMP_CATS.map(([key,label])=>cmpChartRow(key,label,r.cats[key],maxes[key])).join('')}
+      ${CMP_CATS.map(([key,label])=>cmpChartRow(key,label,r.cats[key],maxes[key],state.cmpFrom,state.cmpTo)).join('')}
     </div>`).join('');
   $('#cmpChart').innerHTML = legend + `<div class="cmpchart-grid">${cards}</div>`;
 }
@@ -976,6 +986,24 @@ function renderRemoved(){
 }
 
 // ---------- Detail modal ----------
+// Same category-comparison bar chart used in the Compare-years chart view
+// (cmpChartRow), scaled up for a single property and pinned to YOY_FROM/
+// YOY_TO so it always matches the numbers grid in the same modal - not
+// whatever years happen to be picked in the separate Compare panel.
+function detailChartRows(p){
+  const fy=YOY_FROM, ty=YOY_TO;
+  const rf=rec(p,fy), rt=rec(p,ty);
+  const cats={};
+  ['taxes','insurance','cam'].forEach(k=>{
+    const prev=+rf[k]||0, cur=+rt[k]||0;
+    cats[k]={prev,cur,diff:cur-prev,pct:pctOf(prev,cur),sev:compareSeverity(prev,cur)};
+  });
+  const prevT=total(p,fy), curT=total(p,ty);
+  cats.total={prev:prevT,cur:curT,diff:curT-prevT,pct:pctOf(prevT,curT),sev:compareSeverity(prevT,curT)};
+  const maxes={};
+  CMP_CATS.forEach(([k])=>{ maxes[k]=Math.max(1, cats[k].prev, cats[k].cur); });
+  return CMP_CATS.map(([key,label])=>cmpChartRow(key,label,cats[key],maxes[key],fy,ty)).join('');
+}
 function openDetail(id){
   const p=P.find(x=>x.id==id); if(!p) return;
   const f=flagsOf(p);
@@ -1022,6 +1050,19 @@ function openDetail(id){
       <button class="xbtn" id="closeX">✕</button>
     </div>
     <div class="mbody">
+      <div class="detail-chart">
+        <div class="cmpchart-legend">
+          <span class="lg"><span class="sw" style="background:var(--tax)"></span>Taxes</span>
+          <span class="lg"><span class="sw" style="background:var(--ins)"></span>Insurance</span>
+          <span class="lg"><span class="sw" style="background:var(--cam)"></span>CAM</span>
+          <span class="lg"><span class="sw" style="background:var(--charcoal)"></span>Total</span>
+          <span class="sep"></span>
+          <span class="lg"><span class="sw shade-prev" style="background:var(--charcoal)"></span>${YOY_FROM}</span>
+          <span class="lg"><span class="sw" style="background:var(--charcoal)"></span>${YOY_TO}</span>
+        </div>
+        ${detailChartRows(p)}
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:18px 0 6px">${YOY_FROM} → ${YOY_TO} in numbers</div>
       <div class="cmpgrid">
         <div class="c l h">Line item</div><div class="c h">${YOY_FROM}</div><div class="c h">${YOY_TO}</div><div class="c h">Change</div>
         ${row('Taxes','taxes')}
