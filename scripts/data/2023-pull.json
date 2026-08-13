@@ -1,0 +1,109 @@
+{
+  "year": "2023",
+  "source": "Yardi Property Comparison report, Jan-Dec 2023, Book = Cash, 13 property columns + Total. Reconciled: CAM (Total Reimbursable - Insurance - Property Tax) matches the independent sum of each property's individual \"- CAM\" rows for every column.",
+  "note": "\"Building - Log Lot - Old Cash Advance\" is intentionally omitted - it wasn't a column in this report (looks onboarded after 2023, per its 2024/2025 data), so no entry was fabricated for it.",
+  "properties": {
+    "Building - F&M Bank": {
+      "taxes": 0,
+      "insurance": 0,
+      "cam": 2440,
+      "flags": "review",
+      "comments": {
+        "taxes": "No reimbursable Property Tax (5350) posted for 2023.",
+        "insurance": "No reimbursable Insurance (5320) posted for 2023."
+      }
+    },
+    "Building - Old Planters LLC": {
+      "taxes": 5741.19,
+      "insurance": 3969,
+      "cam": 0,
+      "flags": "review",
+      "comments": {
+        "cam": "CAM nets to $0 — 2023 total reimbursable ($9,710.19) is entirely Property Tax ($5,741.19) + Insurance ($3,969.00); no other reimbursable accounts."
+      }
+    },
+    "Center - 1854 E Market St": {
+      "taxes": 37179.94,
+      "insurance": 14094.63,
+      "cam": 17828.86,
+      "flags": null,
+      "comments": {}
+    },
+    "Center - 2655 S Main St. Hburg": {
+      "taxes": 13283.77,
+      "insurance": 4315.10,
+      "cam": 6195.53,
+      "flags": null,
+      "comments": {}
+    },
+    "Center - Elliott": {
+      "taxes": 11974.95,
+      "insurance": 6421,
+      "cam": 10038.85,
+      "flags": null,
+      "comments": {}
+    },
+    "Center - Genesis": {
+      "taxes": 5237.65,
+      "insurance": 741.24,
+      "cam": 9242.16,
+      "flags": null,
+      "comments": {}
+    },
+    "Center - Hoy": {
+      "taxes": 7985.08,
+      "insurance": 5847,
+      "cam": 10697.08,
+      "flags": null,
+      "comments": {}
+    },
+    "Center - Log Lot": {
+      "taxes": 4956.21,
+      "insurance": 2815,
+      "cam": 9134.31,
+      "flags": null,
+      "comments": {}
+    },
+    "Center - Sunnyside": {
+      "taxes": 5178.60,
+      "insurance": 2705,
+      "cam": 3421.28,
+      "flags": null,
+      "comments": {}
+    },
+    "Center - Tire Mart": {
+      "taxes": 16169.52,
+      "insurance": 5997,
+      "cam": 14097.02,
+      "flags": null,
+      "comments": {}
+    },
+    "Center - Verona": {
+      "taxes": 14242.41,
+      "insurance": 9794.70,
+      "cam": 21588.14,
+      "flags": "multi",
+      "comments": {
+        "cam": "Spans two addresses (465 & 485 Lee Hwy) reported as one column."
+      }
+    },
+    "Center - Gander": {
+      "taxes": 78023.14,
+      "insurance": 12401.90,
+      "cam": 23429.53,
+      "flags": null,
+      "comments": {}
+    },
+    "Center - 143/153 Crown Drive": {
+      "taxes": 0,
+      "insurance": 0,
+      "cam": 0,
+      "flags": "multi, review",
+      "comments": {
+        "taxes": "$0 for 2023 — no reimbursable activity of any kind this year.",
+        "insurance": "$0 for 2023 — no reimbursable activity of any kind this year.",
+        "cam": "$0 for 2023; spans two parcels (143 & 153 Crown Drive). First activity appears in 2025, so this property looks onboarded after 2023."
+      }
+    }
+  }
+}

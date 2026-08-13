@@ -303,10 +303,7 @@
     <button class="btn ghost" id="yardiPullBtn" title="Generate a prompt to pull CAM, Taxes &amp; Insurance data from Yardi">
       📅 Yardi Pull Prompt
     </button>
-    <div class="yearseg" id="yearSeg">
-      <button data-year="2024">2024</button>
-      <button data-year="2025" class="on">2025</button>
-    </div>
+    <div class="yearseg" id="yearSeg"></div>
     <button class="btn ghost" id="logoutBtn" title="Sign out" style="margin-left:14px">⎋ Log out</button>
   </div>
 </header>
@@ -422,7 +419,7 @@
       <div id="methodPane" class="method" style="display:none"></div>
     </div>
     <div class="panel">
-      <div class="ph"><h2>Portfolio at a glance</h2><span class="note">2024 → 2025</span></div>
+      <div class="ph"><h2>Portfolio at a glance</h2><span class="note" id="trendNote"></span></div>
       <div class="chart" id="trendChart"></div>
     </div>
   </div>
@@ -442,10 +439,16 @@
 // below) instead of being hard-coded here.
 let P = [];
 let REMOVED = [];
-const YEARS = [2024,2025];
+const YEARS = [2023,2024,2025];
+// Most-recent-pair shorthand, used wherever the UI shows a single YoY
+// comparison (detail modal, portfolio trend, YoY sort) instead of the full
+// year list — always the latest two years on record, however many years
+// YEARS grows to.
+const YOY_FROM = YEARS[YEARS.length-2] ?? YEARS[0];
+const YOY_TO = YEARS[YEARS.length-1];
 
-const state = { year:2025, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed',
-  cmpOpen:false, cmpFrom:YEARS[YEARS.length-2]??YEARS[0], cmpTo:YEARS[YEARS.length-1], cmpSort:'total', cmpDir:-1, cmpView:'chart' };
+const state = { year:YOY_TO, metric:'total', sort:'total', dir:-1, search:'', flaggedOnly:false, edit:false, tab:'removed',
+  cmpOpen:false, cmpFrom:YOY_FROM, cmpTo:YOY_TO, cmpSort:'total', cmpDir:-1, cmpView:'chart' };
 
 // ---------- Auth ----------
 function showApp(){
@@ -540,7 +543,7 @@ function metricVal(p,y,key){ // key in taxes/insurance/cam/total
 }
 function fmtMetric(v){ return state.metric==='persf' ? psf(v) : usd(v); }
 function flagsOf(p){ const f=(p.flags||'').toLowerCase(); return {multi:f.includes('multi'), review:f.includes('review')}; }
-function yoyPct(p){ const a=total(p,2024), b=total(p,2025); if(!a) return null; return (b-a)/a; }
+function yoyPct(p){ const a=total(p,YOY_FROM), b=total(p,YOY_TO); if(!a) return null; return (b-a)/a; }
 
 // ---------- Year comparison ----------
 function pctOf(prev,cur){ if(!prev) return cur?null:0; return (cur-prev)/prev; }
@@ -728,12 +731,13 @@ function renderChart(){
   }).join('');
 }
 
-// ---------- Trend (portfolio 2024 v 2025) ----------
+// ---------- Trend (portfolio, most recent years) ----------
 function renderTrend(){
   const cats=['taxes','insurance','cam'];
   const sum=(y,k)=>P.reduce((s,p)=>s+(+rec(p,y)[k]||0),0);
   const max=Math.max(...YEARS.flatMap(y=>cats.map(k=>sum(y,k))));
   const grand=y=>cats.reduce((s,k)=>s+sum(y,k),0);
+  $('#trendNote').textContent = YEARS.length>1? `${YEARS[0]} → ${YEARS[YEARS.length-1]}` : `${YEARS[0]}`;
   $('#trendChart').innerHTML =
     `<div style="font-size:12px;color:var(--muted);margin:4px 0 10px">Reimbursable cost by category — full portfolio</div>`+
     cats.map(k=>{
@@ -745,11 +749,16 @@ function renderTrend(){
     }).join('')+
     `<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:10px;display:flex;justify-content:space-between;font-weight:700;color:var(--charcoal)">
       <span>Portfolio total</span>
-      <span class="tnum">${usd(grand(2024))} → ${usd(grand(2025))} <span class="chip ${grand(2025)>grand(2024)?'up':'down'}">▲ ${(((grand(2025)-grand(2024))/grand(2024))*100).toFixed(1)}%</span></span>
+      <span class="tnum">${usd(grand(YOY_FROM))} → ${usd(grand(YOY_TO))} <span class="chip ${grand(YOY_TO)>grand(YOY_FROM)?'up':'down'}">▲ ${(((grand(YOY_TO)-grand(YOY_FROM))/grand(YOY_FROM))*100).toFixed(1)}%</span></span>
     </div>`;
 }
 
 // ---------- Year comparison rendering ----------
+// Built from YEARS so adding a new year (see const YEARS above) only
+// requires touching that one array, not this markup too.
+function renderYearSeg(){
+  $('#yearSeg').innerHTML = YEARS.map(y=>`<button data-year="${y}"${y===state.year?' class="on"':''}>${y}</button>`).join('');
+}
 function renderCompareYearOptions(){
   const opts=YEARS.map(y=>`<option value="${y}">${y}</option>`).join('');
   $('#cmpFromYear').innerHTML=opts; $('#cmpToYear').innerHTML=opts;
@@ -905,7 +914,7 @@ function renderRemoved(){
       <div class="li-r">${r.reason||''}</div></div>`).join('');
   }
   $('#methodPane').innerHTML = `
-    <h3>Scope</h3><p>${P.length} properties, 2024–2025. Property list and years reflect the reviewed feedback; see the Removed Properties tab for the ${REMOVED.length} exclusions and why.</p>
+    <h3>Scope</h3><p>${P.length} properties, ${YEARS[0]}–${YEARS[YEARS.length-1]}. Property list and years reflect the reviewed feedback; see the Removed Properties tab for the ${REMOVED.length} exclusions and why.</p>
     <h3>How Taxes, Insurance &amp; CAM are calculated</h3>
     <p>All three figures come from the <b>5000 (reimbursable) accounts only</b> in each property's Yardi annual statement — consistent with what feeds the CAM reconciliations. Non-reimbursable (6000-account) activity is intentionally excluded, even where it exists.</p>
     <p><b>CAM</b> = Total Reimbursable Expenses minus the reimbursable Insurance and Tax lines — i.e. the CAM-tagged line items only (Repairs-CAM, Grounds Maintenance-CAM, etc.).</p>
@@ -915,9 +924,9 @@ function renderRemoved(){
     <p><span class="kb">▦ Multi-address</span> — the name/address lists more than one street number; confirm the SF represents the correct/combined parcel.</p>
     <p><span class="k">⚑ Review</span> — a data anomaly (unexplained $0, possible duplicate posting, etc.).</p>
     <h3>Worth a closer look</h3>
-    <p><b>Center · 143/153 Crown Drive (Goodwill Danville):</b> tenant started 8/2025, so 2024 is legitimately blank (pre-lease). 2025 Insurance has a near-duplicate amount sitting in the non-reimbursable bucket.</p>
-    <p><b>Building · Log Lot · Old Cash Advance:</b> current tenant only moved in 8/2025, so 2024 reflects a prior tenant/vacancy rather than a data gap.</p>
-    <p><b>Building · F&amp;M Bank:</b> $0 Property Tax in both years and $0 Insurance in 2025 — likely a tenant-direct-pay arrangement rather than missing data.</p>`;
+    <p><b>Center · 143/153 Crown Drive (Goodwill Danville):</b> tenant started 8/2025, so 2023 and 2024 are legitimately blank (pre-lease). 2025 Insurance has a near-duplicate amount sitting in the non-reimbursable bucket.</p>
+    <p><b>Building · Log Lot · Old Cash Advance:</b> current tenant only moved in 8/2025, so 2023–2024 reflect a prior tenant/vacancy rather than a data gap — it wasn't yet a column in the 2023 Yardi report.</p>
+    <p><b>Building · F&amp;M Bank:</b> $0 Property Tax in all three years and $0 Insurance in 2023 and 2025 — likely a tenant-direct-pay arrangement rather than missing data.</p>`;
 }
 
 // ---------- Detail modal ----------
@@ -928,9 +937,8 @@ function openDetail(id){
   if(f.multi) badges+=`<span class="flagbadge fb-blue">▦ Multi-address</span> `;
   if(f.review) badges+=`<span class="flagbadge fb-amber">⚑ Review</span>`;
   const row=(label,key)=>{
-    const a=+rec(p,2024)[key]||(key==='total'?total(p,2024):0);
-    const av = key==='total'?total(p,2024):(+rec(p,2024)[key]||0);
-    const bv = key==='total'?total(p,2025):(+rec(p,2025)[key]||0);
+    const av = key==='total'?total(p,YOY_FROM):(+rec(p,YOY_FROM)[key]||0);
+    const bv = key==='total'?total(p,YOY_TO):(+rec(p,YOY_TO)[key]||0);
     const d=bv-av; const pct=av? (d/av*100):null;
     const chip = pct===null? '<span class="chip flat">new</span>'
       : `<span class="chip ${d>0?'up':d<0?'down':'flat'}">${d>0?'▲':d<0?'▼':'—'} ${Math.abs(pct).toFixed(1)}%</span>`;
@@ -941,8 +949,8 @@ function openDetail(id){
             <div class="c${cls}">${chip}</div>`;
   };
   const persfRow=(label,key)=>{
-    const av=(key==='total'?total(p,2024):(+rec(p,2024)[key]||0))/(p.sf||1);
-    const bv=(key==='total'?total(p,2025):(+rec(p,2025)[key]||0))/(p.sf||1);
+    const av=(key==='total'?total(p,YOY_FROM):(+rec(p,YOY_FROM)[key]||0))/(p.sf||1);
+    const bv=(key==='total'?total(p,YOY_TO):(+rec(p,YOY_TO)[key]||0))/(p.sf||1);
     return `<div class="c l">${label}</div><div class="c tnum">${psf(av)}</div><div class="c tnum">${psf(bv)}</div><div class="c"></div>`;
   };
   // flag comments
@@ -967,7 +975,7 @@ function openDetail(id){
     </div>
     <div class="mbody">
       <div class="cmpgrid">
-        <div class="c l h">Line item</div><div class="c h">2024</div><div class="c h">2025</div><div class="c h">Change</div>
+        <div class="c l h">Line item</div><div class="c h">${YOY_FROM}</div><div class="c h">${YOY_TO}</div><div class="c h">Change</div>
         ${row('Taxes','taxes')}
         ${row('Insurance','insurance')}
         ${row('CAM','cam')}
@@ -975,7 +983,7 @@ function openDetail(id){
       </div>
       <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:18px 0 6px">Per square foot</div>
       <div class="cmpgrid">
-        <div class="c l h">Line item</div><div class="c h">2024 $/SF</div><div class="c h">2025 $/SF</div><div class="c h"></div>
+        <div class="c l h">Line item</div><div class="c h">${YOY_FROM} $/SF</div><div class="c h">${YOY_TO} $/SF</div><div class="c h"></div>
         ${persfRow('Taxes','taxes')}
         ${persfRow('Insurance','insurance')}
         ${persfRow('CAM','cam')}
@@ -1286,7 +1294,7 @@ function exportCsv(){
 // ---------- Events ----------
 function renderAll(){
   renderKpis(); renderTable(); renderChart(); renderTrend(); renderCompare();
-  $('#footer').textContent = `Triangle Investments · CAM, Taxes & Insurance Tracker · ${P.length} properties · 2024–2025 · figures from Yardi 5000 (reimbursable) accounts`;
+  $('#footer').textContent = `Triangle Investments · CAM, Taxes & Insurance Tracker · ${P.length} properties · ${YEARS[0]}–${YEARS[YEARS.length-1]} · figures from Yardi 5000 (reimbursable) accounts`;
 }
 $('#yearSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   state.year=+b.dataset.year; $('#yearSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); renderAll();});
@@ -1350,6 +1358,7 @@ $('#cmpViewSeg').addEventListener('click',e=>{
   $('#cmpChart').style.display = state.cmpView==='chart'?'':'none';
 });
 renderCompareYearOptions();
+renderYearSeg();
 $('#addBtn').addEventListener('click',openAddPropertyModal);
 $('#addRemovedBtn').addEventListener('click',openAddRemovedModal);
 $('#xlsxBtn').addEventListener('click',exportXlsx);
