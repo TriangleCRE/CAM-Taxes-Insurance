@@ -219,6 +219,7 @@
   .yp-note b{color:var(--charcoal)}
   .yp-note ul{margin:8px 0;padding-left:20px}
   .yp-note li{margin:3px 0}
+  .yp-note code{background:#fff;border:1px solid #F0DCB0;border-radius:4px;padding:1px 5px;font-size:12px}
   .yp-yearsrow{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px}
   .yp-yearlist{display:flex;flex-wrap:wrap;gap:8px}
   .yp-chip{display:inline-flex;align-items:center;gap:7px;background:var(--green-l);color:var(--green-d);
@@ -1141,7 +1142,7 @@ function openYardiPullModal(){
     <div class="mh yp-modal">
       <div>
         <h2>Generate Yardi Pull Prompt</h2>
-        <div class="yp-intro">Pick the year(s) you want pulled, run your Yardi packet, then paste this prompt into a Claude session with the downloaded packet attached. Bring its reply back here, then hand it to the Claude Code chat connected to this dashboard's repo.</div>
+        <div class="yp-intro">Pick the year(s) you want pulled, run the Property Comparison report in Yardi, then paste this prompt into a Claude session with the exported Excel file attached. Bring its reply back here, then hand it to the Claude Code chat connected to this dashboard's repo.</div>
       </div>
       <button class="xbtn" id="closeX">✕</button>
     </div>
@@ -1149,8 +1150,8 @@ function openYardiPullModal(){
       <div class="yp-note">
         <b>Before you paste this in:</b>
         <ul>
-          <li>Open the saved <b>"CAM/Tax/Ins Annual Pull"</b> packet in Yardi Breeze, set the year(s) you want, run it, and <b>download</b> it.</li>
-          <li>Attach the downloaded packet to the Claude session along with this prompt. This session no longer needs to be logged into Yardi — it reads the file, it doesn't navigate the site.</li>
+          <li>In Yardi Breeze, run the <b>Property Comparison</b> report scoped to the <code>CAM/Tax/Ins. Properties</code> list, Cash basis, Month Range 01/YYYY–12/YYYY, Show GL Account ON, Consolidate OFF, and <b>Export to Excel</b>.</li>
+          <li>Attach that Excel file to the Claude session along with this prompt. This session no longer needs to be logged into Yardi — it reads the file, it doesn't navigate the site.</li>
           <li>Optionally also attach an <b>Export to Excel</b> of this dashboard (top toolbar) so the session can cross-check property names, addresses, and square footage against what's already tracked here.</li>
         </ul>
         If any properties were acquired, sold, or renamed since the last pull, say so in the same message.
@@ -1210,20 +1211,23 @@ function buildYardiPrompt(years){
     ]
   };
   years.slice(1).forEach(y=>{ example[y] = `... same shape as ${exYear}, one entry per property`; });
-  return `I'm giving you a Yardi Breeze report packet (attached) for Triangle Investments (TPA LLC) covering the following year(s): ${yearList}. It contains an Annual Statement (Book = Cash) and a Property Directory, both scoped to my 14-property "cam.tax" list. Extract the reimbursable-expense data and return it as JSON for my dashboard.
+  return `I'm giving you a Yardi Breeze Property Comparison report (attached, Excel) for Triangle Investments (TPA LLC) covering the following year(s): ${yearList}. It's scoped to my 14-property "cam.tax" list, Cash basis, with one column per property. Extract the reimbursable-expense data and return it as JSON for my dashboard.
 
-STEP 1 — Confirm the packet
-Confirm you can read the attached packet and that it covers the year(s) above. If a year, a property, or either report is missing, stop and tell me — do not guess or fabricate numbers.
+STEP 1 — Confirm the report
+Confirm you can read the attached report and that it covers the year(s) above, Cash basis, with a column per property. If a year, a property, or the reimbursable (5000-series) section is missing, stop and tell me — do not guess or fabricate numbers.
 
 STEP 2 — Confirm the property list
-From the Property Directory, list each property's name/code, address, and square footage. If I also attached an export of the CAM/Taxes/Insurance dashboard, cross-check against it and flag mismatches (new, sold/removed, renamed, changed SF).
+List each property column shown in the report. If I also attached a Property Directory or an export of the CAM/Taxes/Insurance dashboard, cross-check against it and flag mismatches (new, sold/removed, renamed, changed SF).
 
 STEP 3 — Pull the financial data
-For each property and each year, read the full-year (calendar-year) cash-basis totals from the Annual Statement for the Yardi 5000-series reimbursable accounts, rolled into three categories:
-  - Taxes — accounts: [FILL IN, e.g. 5100]
-  - Insurance — accounts: [FILL IN, e.g. 5200]
-  - CAM — accounts: [FILL IN, e.g. 5300–5900]
-Use the full-year total column, not monthly or accrual figures. If the packet already subtotals these three categories, use those subtotals.
+For each property column, read the full-year cash-basis totals from the 5000-series reimbursable section, rolled into three categories:
+  - Taxes     — account 5350 (Property Tax)
+  - Insurance — account 5320 (Insurance)
+  - CAM       — every other reimbursable account, i.e. all the "– CAM" accounts:
+               5110, 5200, 5210, 5220, 5230, 5240, 5250, 5260, 5300, 5310,
+               5400, 5410, 5420, 5430, 5435, 5440, 5450.
+               Equivalently: CAM = Total Reimbursable Expenses (5990) − 5320 − 5350.
+Use each property's own column, not the Total column. Some "– CAM" rows can be negative (reclasses/credits) — include them as-is in the CAM sum.
 
 STEP 4 — Flag anything unusual
 Flag anything a human should re-check: a property spanning multiple parcels/addresses ("multi"), a category missing or $0 for the full year ("review"), a large swing vs. the prior year, a property acquired or sold mid-year. Combine as "multi, review" when both apply.
@@ -1237,7 +1241,7 @@ ${JSON.stringify(example, null, 2)}
 
 Rules for the JSON:
   - One top-level key per year pulled, each holding an array of property objects.
-  - Include every property from the "cam.tax" list, even ones with $0 activity (use 0 and add a comment explaining why).
+  - Include every property column from the report, even ones with $0 reimbursable activity (use 0 and add a comment explaining why).
   - "taxes" / "insurance" / "cam" are full-year cash-basis dollar totals — numbers only, no "$" or commas.
   - "flags" is null, "review", "multi", or "multi, review".
   - "comments" is an object keyed by the field it explains — omit keys that don't need one; leave as {} if nothing needs flagging.
