@@ -938,15 +938,16 @@ function renderRemoved(){
     <h3>How Taxes, Insurance &amp; CAM are calculated</h3>
     <p>All three figures come from the <b>5000 (reimbursable) accounts only</b> in each property's Yardi annual statement — consistent with what feeds the CAM reconciliations. Non-reimbursable (6000-account) activity is intentionally excluded, even where it exists.</p>
     <p><b>CAM</b> = Total Reimbursable Expenses minus the reimbursable Insurance and Tax lines — i.e. the CAM-tagged line items only (Repairs-CAM, Grounds Maintenance-CAM, etc.).</p>
+    <p>For a few properties CAM isn't billed through Yardi at all — see "Worth a closer look" below. For those, this method only reflects what's posted in Yardi's reimbursable accounts, not a full reconciliation.</p>
     <h3>Square footage</h3>
     <p>All properties use the square footage listed in Yardi, for consistency with the CAM reconciliations.</p>
     <h3>Flags</h3>
     <p><span class="kb">▦ Multi-address</span> — the name/address lists more than one street number; confirm the SF represents the correct/combined parcel.</p>
     <p><span class="k">⚑ Review</span> — a data anomaly (unexplained $0, possible duplicate posting, etc.).</p>
     <h3>Worth a closer look</h3>
-    <p><b>Center · 143/153 Crown Drive (Goodwill Danville):</b> tenant started 8/2025, so 2023 and 2024 are legitimately blank (pre-lease). 2025 Insurance has a near-duplicate amount sitting in the non-reimbursable bucket.</p>
-    <p><b>Building · Log Lot · Old Cash Advance:</b> current tenant only moved in 8/2025, so 2023–2024 reflect a prior tenant/vacancy rather than a data gap — it wasn't yet a column in the 2023 Yardi report.</p>
-    <p><b>Building · F&amp;M Bank:</b> $0 Property Tax in all three years and $0 Insurance in 2023 and 2025 — likely a tenant-direct-pay arrangement rather than missing data.</p>`;
+    <p><b>Center · 143/153 Crown Drive (Goodwill Danville):</b> tenant started 8/2025, so 2023 and 2024 are legitimately blank (pre-lease). 2025 Insurance has a near-duplicate amount sitting in the non-reimbursable bucket. Leigh Ann confirmed (Aug 2026) the CAM reconciliation for this property hasn't been finalized yet — there's an open question about which meter is tied to the shared electric usage, so treat 2025 CAM as provisional until that's resolved.</p>
+    <p><b>Building · Log Lot · Old Cash Advance:</b> current tenant only moved in 8/2025, so 2023–2024 reflect a prior tenant/vacancy rather than a data gap — it also wasn't yet a column in the 2023 Yardi report. Leigh Ann noted (Aug 2026) she likely didn't bill 2025 CAM for this property through Yardi either — like F&amp;M Bank below, it shares some expenses with neighboring properties and not others, which doesn't flow cleanly into a Yardi reconciliation statement.</p>
+    <p><b>Building · F&amp;M Bank:</b> $0 Property Tax in all three years and $0 Insurance in 2023 and 2025. Leigh Ann confirmed (Aug 2026) CAM for this property isn't billed through Yardi at all — it shares some expenses with neighboring properties and not others, so treat the CAM figure here as Yardi's reimbursable-account view only, not a full reconciliation.</p>`;
 }
 
 // ---------- Detail modal ----------
@@ -1186,7 +1187,7 @@ function openYardiPullModal(){
         <div class="yp-note">
           <b>Before you paste this in:</b>
           <ul>
-            <li>In Yardi Breeze, run the <b>Property Comparison</b> report scoped to the <code>CAM/Tax/Ins. Properties</code> list, Report Columns = <b>Actual</b>, Cash basis, Month Range 01/YYYY–12/YYYY, Show GL Account ON, Consolidate OFF, and <b>Export to Excel</b>.</li>
+            <li>In Yardi Breeze, under <b>Financial Reports</b>, run the <b>Property Comparison</b> report scoped to the <code>CAM/Tax/Ins. Properties</code> list, Report Columns = <b>Actual</b>, Cash basis, Month Range 01/YYYY–12/YYYY, Show GL Account ON, Consolidate OFF, and <b>Export to Excel</b>.</li>
             <li>Attach that Excel file to the Claude session along with this prompt. This session no longer needs to be logged into Yardi — it reads the file, it doesn't navigate the site.</li>
             <li>Optionally also attach an <b>Export to Excel</b> of this dashboard (top toolbar) so the session can cross-check property names, addresses, and square footage against what's already tracked here.</li>
           </ul>
