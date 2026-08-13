@@ -1509,8 +1509,16 @@ Use each property's own column, not the Total column. Some "– CAM" rows can be
 STEP 4 — Flag anything unusual
 Flag anything a human should re-check: a property spanning multiple parcels/addresses ("multi"), a category missing or $0 for the full year ("review"), a large swing vs. the prior year, a property acquired or sold mid-year. Combine as "multi, review" when both apply.
 
-STEP 5 — Reply in this exact format
-Reply with ONLY a single fenced JSON code block — no commentary before or after — so I can paste it straight into this dashboard's Yardi Pull → Import step:
+STEP 5 — Reply with an intro, then the JSON
+Start with a short intro in plain text (a few sentences, no JSON yet) that:
+  - States what this data is and tells me to merge it into the dashboard under the year(s) pulled — add the year if it's new, overwrite if it's already there.
+  - Surfaces anything from STEP 2 that didn't line up: a property on the list with no column in this report (name it, and say no row was fabricated for it), plus any new, renamed, or changed-SF properties.
+  - Notes that per-property flags and comments are embedded in the JSON below, not repeated in the intro.
+  - If nothing was off, say so in one line instead of listing anything.
+
+Then a single fenced JSON code block in this exact shape, so I can paste it straight into this dashboard's Yardi Pull → Import step. Example reply:
+
+This is the ${yearList} CAM/Taxes/Insurance pull from the Property Comparison report — merge it into the dashboard under ${yearList} (add the year if it's new, overwrite if it's already there). Everything on the property list matched a column in the report, so nothing to flag from STEP 2. Per-property flags and comments for anything worth a second look are embedded in the JSON below.
 
 \`\`\`json
 ${JSON.stringify(example, null, 2)}
